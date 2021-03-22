@@ -1,8 +1,8 @@
 ![my Logo](images//fake_logo.png)
 
-# Welcome all! Welcome to my data dashboard.
+## Welcome all! Welcome to my data dashboard.
  
-# This is a simple tool specifically designed to help you with:
+### This is a simple tool specifically designed to help you with:
  
 1. reducing effort
 2. processing large datasets
