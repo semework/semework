@@ -8,8 +8,7 @@ dash
 Flask-Compress 
 Flask 
 future 
-gunicorn 
-IPython
+gunicorn
 math
 matplotlib
 networkx
