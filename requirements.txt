@@ -1,45 +1,41 @@
+base64
 Brotli==1.0.9
 click==7.1.2
-dash==1.19.0
 dash-core-components==1.15.0
 dash-html-components==1.1.2
 dash-renderer==1.9.0
 dash-table==4.11.2
-Flask==1.1.2
+dash==1.19.0
 Flask-Compress==1.9.0
+Flask==1.1.2
 future==0.18.2
 gunicorn==19.10.0
+IPython
 itsdangerous==1.1.0
 Jinja2==2.11.3
 MarkupSafe==1.1.1
-plotly==4.14.3
-python==3.8.0
-retrying==1.3.3
-six==1.15.0
-Werkzeug==1.0.1
-pandas
-seaborn
-numpy
-statsmodels
-IPython
-matplotlib
-os
-pathlib
-scipy 
-sklearn
-base64
 math
+matplotlib
 networkx
+numpy
+os
+pandas
+pathlib
+plotly==4.14.3
+retrying==1.3.3
+scipy 
+seaborn
+six==1.15.0
+sklearn
+statsmodels
+Werkzeug==1.0.1
 
 
 
 
 
 
-
-
-
-alabaster==0.7.10
+# alabaster==0.7.10
 # alabaster==0.7.10
 # appnope==0.1.0
 # astroid==1.5.3
