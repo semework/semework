@@ -11,7 +11,6 @@ future
 gunicorn 
 IPython
 itsdangerous 
-Jinja2 
 math
 matplotlib
 networkx
