@@ -1,4 +1,3 @@
-base64
 Brotli==1.0.9
 click==7.1.2
 dash-core-components==1.15.0
