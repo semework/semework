@@ -12,7 +12,6 @@ gunicorn
 IPython
 itsdangerous 
 Jinja2 
-MarkupSafe
 math
 matplotlib
 networkx
