@@ -9,7 +9,6 @@ Flask-Compress
 Flask 
 future 
 gunicorn
-math
 matplotlib
 networkx
 numpy
