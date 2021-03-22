@@ -1,7 +1,7 @@
 ![my Logo](images//fake_logo.png)
 
 # Welcome all! Welcome to my data dashboard.
-<hr>
+ 
 # This is a simple tool specifically designed to help you with:
  
 1. reducing effort
