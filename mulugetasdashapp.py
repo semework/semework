@@ -270,7 +270,7 @@ app.layout = html.Div([
                                },
                          ),
 
-html.Div([html.A('About this app', href='/Users/mulugetasemework/Dropbox/Phyton/TDI/DASH/Heroku/MData_wiki.html',
+html.Div([html.A('About this app', href='https://github.com/semework/semework',
                  target='_blank')],
                          style={
                               'justify':'center',
