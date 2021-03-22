@@ -42,9 +42,8 @@ Accordingly, this tool is:
 1. click a button to upload your data 
 2. press on dials and move sliders to decide how to analyze it, such as: 
 3. chooseing  your target (label) column, the feature you want to understand/improve 
-4. press run 
- 
- 
+
+
 That’s it. You get insight about your data, how the features relate to eachother,
 to your most important feature and what ML tools are best for your data.
 
@@ -62,7 +61,7 @@ of data analysis. The main page should resemble the picture below when you just 
  
 ![main](images//File_upload.png)
 
-<hr>
+ 
 ## Current status 
 
 ### You can now:  
