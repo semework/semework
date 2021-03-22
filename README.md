@@ -90,7 +90,7 @@ of data analysis. The main page should resemble the picture below when you just 
  
 ![file_save](images//main_after.png)
 
-#### Kindly get started by playing with the sample data provided (here:[the famous Iris data](https://github.com/semework/semework/tree/main/assets) ), which you can upload when you first run the app.
+#### Kindly get started by playing with the sample data provided (famous Iris data) ([here](https://github.com/semework/semework/tree/main/assets) ), which you can upload when you first run the app.
 
 <p> </p>
 <hr>
