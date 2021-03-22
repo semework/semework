@@ -1,21 +1,16 @@
 ![my Logo](images//fake_logo.png)
 
-# Welcome all! 
+# Welcome all! Welcome to my data dashboard.
 <hr>
-## Welcome to my data dashboard.
-<hr>
-
 # This is a simple tool specifically designed to help you with:
  
 1. reducing effort
 2. processing large datasets
 3. and getting true validation.
-<p></p>
 
+# Why this app? 
 Although there are several expensive and very complicated choices, most require 
-some/basic training on how to even use them.
-
-Accordingly, this tool is:
+some/basic training on how to even use them. Accordingly, this tool is:
 
 * a simple (just upload your data CSV) 
 * cheap 
