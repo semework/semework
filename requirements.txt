@@ -12,7 +12,6 @@ gunicorn
 matplotlib
 networkx
 numpy
-os
 pandas
 pathlib
 plotly 
