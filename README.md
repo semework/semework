@@ -90,6 +90,8 @@ of data analysis. The main page should resemble the picture below when you just 
  
 ![file_save](images//main_after.png)
 
+## Kindly get started by playing with the sample data provided (here:[GitHub](https://github.com/semework/semework/tree/main/assets) ), which you can upload when you first run the app.
+
 <p> </p>
 <hr>
 Thank you for trying the tool. Please feel free to contact me for feedback and questions.
