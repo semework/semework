@@ -1,40 +1,24 @@
-
- 
 ![my Logo](images//fake_logo.png)
 
 # Welcome all! 
- 
-</span>
-</div>
 <hr>
-
 ## Welcome to my data dashboard.
-<p></p>
 <hr>
 
 # This is a simple tool specifically designed to help you with:
  
 1. reducing effort
-
 2. processing large datasets
-
 3. and getting true validation.
- 
 <p></p>
-<p></p>
-
 
 Although there are several expensive and very complicated choices, most require 
 some/basic training on how to even use them.
 
-
 Accordingly, this tool is:
 
- 
 * a simple (just upload your data CSV) 
-
 * cheap 
-
 * low maintenance tool desinged for individuals and businesses. 
  
 # Here is how it works, you:  
@@ -43,10 +27,8 @@ Accordingly, this tool is:
 2. press on dials and move sliders to decide how to analyze it, such as: 
 3. chooseing  your target (label) column, the feature you want to understand/improve 
 
-
 That’s it. You get insight about your data, how the features relate to eachother,
 to your most important feature and what ML tools are best for your data.
-
 
 # Data analysis workflow 
  
@@ -61,7 +43,6 @@ of data analysis. The main page should resemble the picture below when you just 
  
 ![main](images//File_upload.png)
 
- 
 ## Current status 
 
 ### You can now:  
@@ -77,7 +58,6 @@ of data analysis. The main page should resemble the picture below when you just 
 
 # Main panels 
 
- 
 1. Data-upload 
 2. Analysis setup 
 3. Plot axis choices dropdown 
@@ -100,32 +80,24 @@ of data analysis. The main page should resemble the picture below when you just 
  
 ## Pick target, x-axis and y-axis columns from the dropdown panel 
 <p></p>
-<p></p>
- 
+
 ![target_x_y](images//Main_dropdowns.png)
 <p></p>
 
 ## Choose your file-saving preferences  
 <p></p>
-<p></p>
-
- 
 ![file_save1](images//File_saving.png)
 <p></p>
 
 
 # That's all! You should see some results now and the page should look something like this ...  
 <p></p>
-<p></p>
  
 ![file_save](images//main_after.png)
-  
-  
-<p> </p>
-<p> </p>
+
 <p> </p>
 <hr>
 Thank you for trying the tool. Please feel free to contact me for feedback and questions.
 <hr>
 <p> </p>
-###### Last edit March 22, 2021. Mulugeta Semework Abebe
+©  Last edit March 22, 2021. Mulugeta Semework Abebe
