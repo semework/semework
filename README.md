@@ -20,7 +20,8 @@ some/basic training on how to even use them. Accordingly, this tool is:
 
 1. click a button to upload your data 
 2. press on dials and move sliders to decide how to analyze it, such as: 
-3. chooseing  your target (label) column, the feature you want to understand/improve 
+     * chooseing  your target (label) column
+     * the feature you want to understand/improve 
 
 That’s it. You get insight about your data, how the features relate to eachother,
 to your most important feature and what ML tools are best for your data.
