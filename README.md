@@ -2,11 +2,12 @@
  
 ![my Logo](images//fake_logo.png)
 
-
- # Welcome all! 
+# Welcome all! 
+ 
 </span>
 </div>
 <hr>
+
 ## Welcome to my data dashboard.
 <p></p>
 <hr>
@@ -23,23 +24,21 @@
 <p></p>
 
 
-Although there are several expensive and very complicated choices, most
-
-require some/basic training on how to even use them.
+Although there are several expensive and very complicated choices, most require 
+some/basic training on how to even use them.
 
 
 Accordingly, this tool is:
 
  
-* a simple (just upload your data CSV)</li>
+* a simple (just upload your data CSV) 
 
-* cheap</li>
+* cheap 
 
-* ow maintenance tool desinged for individuals and businesses.</li>
+* low maintenance tool desinged for individuals and businesses. 
  
 # Here is how it works, you:  
 
- 
 1. click a button to upload your data 
 2. press on dials and move sliders to decide how to analyze it, such as: 
 3. chooseing  your target (label) column, the feature you want to understand/improve 
@@ -56,10 +55,10 @@ to your most important feature and what ML tools are best for your data.
 
 ## About the app 
 
-The app is designed to be a simple webtool with four main user-input panels (listed below), and 18 figure panels.
-The figures go from simple scatter plots to correlation heatmaps, to distribution displays, all the way to
-fast ML analysis to help direct future directions of data analysis.
-The main page should resemble the picture below when you just open it
+The app is designed to be a simple webtool with four main user-input panels (listed below),
+and 18 figure panels. The figures go from simple scatter plots to correlation heatmaps, 
+to distribution displays, all the way tofast ML analysis to help direct future directions 
+of data analysis. The main page should resemble the picture below when you just open it.
  
 ![main](images//File_upload.png)
 
@@ -128,5 +127,6 @@ The main page should resemble the picture below when you just open it
 <p> </p>
 <hr>
 Thank you for trying the tool. Please feel free to contact me for feedback and questions.
+<hr>
 <p> </p>
-### Last edit March 22, 2021. Mulugeta Semework Abebe
+###### Last edit March 22, 2021. Mulugeta Semework Abebe
