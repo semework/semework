@@ -1,1 +1,1 @@
- web: gunicorn mulugetasdashapp:server
+web: gunicorn mulugetasdashapp:server
