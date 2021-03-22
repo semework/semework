@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Feb 12 20:02:09 2021
-
-@author: mulugetasemework
-"""
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor, VotingClassifier, \
     BaggingRegressor, AdaBoostRegressor, GradientBoostingRegressor, ExtraTreesClassifier, \
     VotingRegressor, BaggingClassifier, AdaBoostClassifier, GradientBoostingClassifier
@@ -107,10 +100,12 @@ sns.set(style="ticks")
 init_notebook_mode(connected=True)
 #%%
 
-app = dash.Dash(__name__)
-server = app.server
-
+ 
+########### Initiate the app
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+server = app.server
+app.title='Mcapstone
 colors = {
     'background': '#57414C', 'fig_background':'black','fig_color':'black',
     'text': '#57414C','panelborder':'#031670','main_page_background_color':'#0b0342',
@@ -1512,4 +1507,4 @@ def variable_importance_wordcloud_graph(rows, target, hoverData, xaxis_column_na
     return thisFig
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server()
