@@ -89,7 +89,6 @@ of data analysis. The main page should resemble the picture below when you just 
 ## That's all! The first three plots will fill up with all of the data, for visual surveillance 
 <p></p>
  
-
 ## Once you choose your target and x and ys, you should see some results now - and the page should look something like this ...  
 <p></p>
 ![current](images//main_after.png)
