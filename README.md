@@ -43,7 +43,7 @@ of data analysis. The main page should resemble the picture below when you just 
 
 ### You can now:  
  
-* upload data and see at 7 plots (using just numeric data as the Iris data provided here)
+* upload data and see 8 plots (as tested using just numeric data i.e. the Iris data provided here)
 * the first few are simple data explorations, they are then followed by one RF analysis (showing variable importance for your target variable). RF is show in both bar graphs and wordcloud
 * dropdown boxes and data size slider work,  and you can see them changing plots 
  
@@ -91,6 +91,9 @@ The first three plots will fill up with all of the data, for visual surveillance
  
 ![xgzg](images//current_figs_with_iris_data.png)
 
+## Please be patient and wait if you don't see all figures for the Iris data. Slowness is due to RF analysis.  
+ 
+
 #### Kindly get started by playing with the sample data provided (famous Iris data) ([here](https://github.com/semework/semework/tree/main/assets) ), which you can upload when you first run the app.
 
 <p> </p>
@@ -98,4 +101,5 @@ The first three plots will fill up with all of the data, for visual surveillance
 Thank you for trying the tool. Please feel free to contact me for feedback and questions.
 <hr>
 <p> </p>
+
 ©  Last edit March 24, 2021. Mulugeta Semework Abebe
