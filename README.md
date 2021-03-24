@@ -44,6 +44,7 @@ of data analysis. The main page should resemble the picture below when you just 
 ### You can now:  
  
 * upload data and see at 7 plots (using just numeric data as the Iris data provided here)
+* the first few are simple data explorations, they are then followed by one RF analysis (showing variable importance for your target variable)
 * dropdown boxes and data size slider work,  and you can see them changing plots 
  
 ## Due to intricacies of the analyis, these are left to do: 
