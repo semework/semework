@@ -87,12 +87,12 @@ of data analysis. The main page should resemble the picture below when you just 
 <p></p>
 
 
-## That's all! The first three plots will fill up with all of the data, for visual surveillance 
+## That's all! The first three plots will fill up with all of the data, for visual surveillance. It may take a minute or two for graph updating 
 <p></p>
  
 ## Once you choose your target and x and ys, you should see some results now - and the page should look something like this ...  
 <p></p>
-![current](images//main_after.png)
+![xgzg](images//main_after.png)
 
 #### Kindly get started by playing with the sample data provided (famous Iris data) ([here](https://github.com/semework/semework/tree/main/assets) ), which you can upload when you first run the app.
 
@@ -101,4 +101,4 @@ of data analysis. The main page should resemble the picture below when you just 
 Thank you for trying the tool. Please feel free to contact me for feedback and questions.
 <hr>
 <p> </p>
-©  Last edit March 22, 2021. Mulugeta Semework Abebe
+©  Last edit March 24, 2021. Mulugeta Semework Abebe
