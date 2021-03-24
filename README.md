@@ -43,14 +43,14 @@ of data analysis. The main page should resemble the picture below when you just 
 
 ### You can now:  
  
-* upload data and see at least 5 plots </li>
-* dropdown boxes and data size slider work and you can see them changing plots 
+* upload data and see at 7 plots (using just numeric data as the Iris data provided here)
+* dropdown boxes and data size slider work,  and you can see them changing plots 
  
 ## Due to intricacies of the analyis, these are left to do: 
  
 1. plotting all figures, including ML comparisons and performances  
 2. file-saving is currently not functional 
-3. data cleaning/conversion pipelines need more work 
+3. data cleaning/conversion pipelines need more work (for instance categorical vs numeric data pipleline, as plotly is very picky about it)
 
 # Main panels 
 
@@ -86,10 +86,13 @@ of data analysis. The main page should resemble the picture below when you just 
 <p></p>
 
 
-# That's all! You should see some results now and the page should look something like this ...  
+# That's all! The first three plots will fill up with all of the data, for visual surveillance, and the page should look something like this ...  
 <p></p>
- 
-![file_save](images//main_after.png)
+![file_save](images//first_load.png)
+
+# Once you choose your target and x and ys, you should see some results now and the page should look something like this ...  
+<p></p>
+![file_save](images//current_figs_with_iris_data.png)
 
 #### Kindly get started by playing with the sample data provided (famous Iris data) ([here](https://github.com/semework/semework/tree/main/assets) ), which you can upload when you first run the app.
 
