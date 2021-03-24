@@ -75,23 +75,20 @@ of data analysis. The main page should resemble the picture below when you just 
  
 ![datatable](images//Datatable.png)
  
-## Pick target, x-axis and y-axis columns from the dropdown panel 
-<p></p>
-
+## Pick target, x-axis and y-axis columns from the dropdown panel
 ![target_x_y](images//Main_dropdowns.png)
 <p></p>
 
 ## Choose your file-saving preferences  
-<p></p>
 ![file_save1](images//File_saving.png)
 <p></p>
 
 
-## That's all! The first three plots will fill up with all of the data, for visual surveillance. It may take a minute or two for graph updating 
-<p></p>
+## That's all! 
+The first three plots will fill up with all of the data, for visual surveillance. It may take a minute or two for graph updating 
  
 ## Once you choose your target and x and ys, you should see some results now - and the page should look something like this ...  
-<p></p>
+ 
 ![xgzg](images//main_after.png)
 
 #### Kindly get started by playing with the sample data provided (famous Iris data) ([here](https://github.com/semework/semework/tree/main/assets) ), which you can upload when you first run the app.
