@@ -2,14 +2,15 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor, Voti
     BaggingRegressor, AdaBoostRegressor, GradientBoostingRegressor, ExtraTreesClassifier, \
     VotingRegressor, BaggingClassifier, AdaBoostClassifier, GradientBoostingClassifier
 
-def adj_r2_score(r2, n, k):
-    return 1-((1-r2)*((n-1)/(n-k-1)))
+from sklearn.metrics import (accuracy_score,mean_squared_error, median_absolute_error,
+                             matthews_corrcoef, r2_score, confusion_matrix, roc_auc_score,
+                             classification_report, r2_score, roc_curve as roc_curve)
 
-from dash.dependencies import Input, Output
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 from datetime import timedelta
 from IPython.core.display import display, HTML
+from IPython.display import Image
 from matplotlib.pyplot import figure
 from matplotlib.ticker import FormatStrFormatter
 from mpl_toolkits.mplot3d import Axes3D
@@ -20,65 +21,37 @@ from pathlib import Path
 from plotly.graph_objs import *
 from plotly.graph_objs import *
 from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
+from plotly.offline import plot
 from random import randint, seed
 from scipy import stats
 from scipy.cluster.hierarchy import dendrogram, linkage
 from scipy.stats import binned_statistic
 from scipy.stats.stats import pearsonr
-from sklearn import datasets
-from sklearn import model_selection, tree, tree as sklearn_tree
+from sklearn import datasets, model_selection, tree
 from sklearn.base import clone
 from sklearn.compose import ColumnTransformer
 from sklearn.compose import make_column_selector as selector
 from sklearn.decomposition import PCA
-from sklearn.decomposition import PCA as sklearnPCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor, VotingClassifier
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.ensemble.forest import _generate_unsampled_indices
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression, LinearRegression, Ridge,Lasso, ElasticNet
-from sklearn.metrics import accuracy_score,mean_squared_error, median_absolute_error
-from sklearn.metrics import matthews_corrcoef, r2_score, confusion_matrix, roc_auc_score, classification_report
-from sklearn.metrics import r2_score
-from sklearn.metrics import roc_curve as roc_curve
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import KFold
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import (cross_val_score, KFold, train_test_split, GridSearchCV)
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import MinMaxScaler, Normalizer, RobustScaler,StandardScaler
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC
-from sklearn.svm import SVR
-from sklearn.tree import DecisionTreeClassifier
-from textwrap import wrap
-from time import sleep
+from sklearn.preprocessing import MinMaxScaler, Normalizer, RobustScaler, StandardScaler, OneHotEncoder
+from sklearn.tree import DecisionTreeClassifier,export_graphviz
+from wordcloud import WordCloud
 import base64
-import collections
 import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table
-import datetime
-import dateutil.parser
-import functools
 import io
-import itertools
-import math
-import matplotlib
 import matplotlib.pyplot as plt
 import networkx as nx
-import numpy
 import numpy as np
-import operator
-import os
-import pandas
 import pandas as pd
 import plotly
 import plotly.express as px
@@ -87,12 +60,22 @@ import plotly.graph_objects as go
 import plotly.graph_objs as go
 import plotly.io as pio
 import plotly.offline
-import pydotplus
 import random
-import re
 import seaborn as sns
-import statsmodels.api as sm
-import sys
+from sklearn import tree
+
+
+def _generate_unsampled_indices(random_state, n_samples, n_samples_bootstrap):
+    """
+    Private function used to forest._set_oob_score function."""
+    sample_indices = _generate_sample_indices(random_state, n_samples,
+                                              n_samples_bootstrap)
+    sample_counts = np.bincount(sample_indices, minlength=n_samples)
+    unsampled_mask = sample_counts == 0
+    indices_range = np.arange(n_samples)
+    unsampled_indices = indices_range[unsampled_mask]
+
+    return unsampled_indices
 
 #%%
 pio.renderers.default = 'browser'
@@ -100,12 +83,11 @@ sns.set(style="ticks")
 init_notebook_mode(connected=True)
 #%%
 
- 
 ########### Initiate the app
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 server = app.server
-app.title='Mcapstone
+app.title='Mcapstone'
 colors = {
     'background': '#57414C', 'fig_background':'black','fig_color':'black',
     'text': '#57414C','panelborder':'#031670','main_page_background_color':'#0b0342',
@@ -204,8 +186,12 @@ drop_titile = {'color':'white','textAlign':"left",'fontSize':18,
                                     'width':'30%','height': '10px',
                                 'padding': '-50px -150px'}
 
+#%%  vars for popuiating fields before loading data
 
-#%%
+
+(target, hoverData, xaxis_column_name, yaxis_column_name,
+                xaxis_type, yaxis_type, data_selection, datasize)=[],[],[],[],'linear','linear','Both', 75
+
 # %% important parameters to play with
 sampling_percentage = 1 # how much of the data we would like to use,
 # in fractions, upto "1", meaning use all
@@ -221,28 +207,29 @@ NaN_thresh = 0.95 # any column with  this percentage of Nans is discarded
 # with data in sparse columns are still important
 save_csv = 1
 save_fig = 1
-do_over_all_var_importance = 1
-plot_importance_ranks = 1
 
 #%%
+#### ----------  app  --------------------------------------------------------
 app.layout = html.Div([
 
-            html.Div([
-                 html.H3("Your Data Dashboard"),
-                 ],
+                html.Div([
+                     html.H3("Your Data Dashboard"),
+                     ],
 
-                 className="banner",
-                             style={
-                'width': '100%',
-                'height': '40px',
-                'textAlign': 'center',
-                'margin': '5px',
-                'color':'white',
-                'box-shadow':' 1px 2px 18px  #888888',
-                  },
-                  ),
-#### ----------  upload button  --------------------
+                     className="banner",
+                                 style={
+                    'width': '100%',
+                    'height': '40px',
+                    'textAlign': 'center',
+                    'margin': '5px',
+                    'color':'white',
+                    'box-shadow':' 1px 2px 18px  #888888',
+                      },
+                      ),
+#### ----------  upload button  ----------------------------------------------
             html.Div([
+
+
                     dcc.Upload(
                          id='datatable-upload',
                          children=html.Div
@@ -251,7 +238,8 @@ app.layout = html.Div([
                              html.A('Select Files')
                              ],style={'fontSize':22, 'textAlign':'center','Align':'center',# "margin-left": "30%",
                                      'border-radius':35,'color':'white',
-                                     'bodercolor':'white','background-image': 'radial-gradient(ellipse at center, #4d2d2b, transparent)'}),
+                                     'bodercolor':'white','background-image':
+                                         'radial-gradient(ellipse at center, #4d2d2b, transparent)'}),
 
                          style={
                              'justify':'center',
@@ -270,6 +258,10 @@ app.layout = html.Div([
                                },
                          ),
 
+
+#### ----------  about this app ----------------------------------------------
+
+
 html.Div([html.A('About this app', href='https://github.com/semework/semework',
                  target='_blank')],
                          style={
@@ -283,14 +275,17 @@ html.Div([html.A('About this app', href='https://github.com/semework/semework',
                               'color':'white',
                               'font-size': '150%',
                                 },),
-
-    html.Label(("A simple tool to analayze your data. Upload your CSV file above, results show up in the 18 figure plots below.\n"),
-                   style={"margin-left": "5%",'textAlign':'center', 'fontSize':20, 'color':'lightyellow',
+#### ----------  description -------------------------------------------------
+     html.Label(("A simple tool to analayze your data. Upload your CSV file above, results show up in the 18 figure plots below.\n"),
+                   style={"margin-left": "5%",'textAlign':'center',
+                          'fontSize':20, 'color':'lightyellow',
                             'width': '90%',
                              'textAlign':'center',
                               'height': '20px',}),
                     ]),
-        html.Br(),
+      html.Br(),
+
+#### ----------  analysis setup -----------------------------------------------
 
       html.Div([dash_table.DataTable(id='analysis_txt'),
                  html.Label(("Analysis setup"),
@@ -337,46 +332,49 @@ html.Div([html.A('About this app', href='https://github.com/semework/semework',
                     )
                   ],style=table_style_narrow),
 
+#### ----------  dropdowns     -----------------------------------------------
 
+    html.Div([dash_table.DataTable(id='dropdowns'),
 
-        html.Div([dash_table.DataTable(id='dropdowns'),
+    html.H6(" \n target", style=drop_titile),
 
-        html.H6(" \n target", style=drop_titile),
+    dcc.Dropdown(
+        id = 'dropdown_target', placeholder='Select target/label',
+        options=[], style=drop_down_style_main),
+                    html.H6("x-axis", style=drop_titile),
+            dcc.Dropdown(
+                id = 'crossfilter-xaxis-column', placeholder='Select X-Axis',
+                options=[], style=drop_down_style_main),
+            html.H6("y-axis", style=drop_titile),
 
-        dcc.Dropdown(
-            id = 'dropdown_target', placeholder='Select target/label',
-            options=[], style=drop_down_style_main),
-                        html.H6("x-axis", style=drop_titile),
-                dcc.Dropdown(
-                    id = 'crossfilter-xaxis-column', placeholder='Select X-Axis',
-                    options=[], style=drop_down_style_main),
-                html.H6("y-axis", style=drop_titile),
-            # html.Br(),
+            dcc.Dropdown(
+                id = 'crossfilter-yaxis-column', placeholder='Select Y-Axis',
+                options=[], style=drop_down_style_main),
+              ],style=table_style_narrow_high),
 
-                dcc.Dropdown(
-                    id = 'crossfilter-yaxis-column', placeholder='Select Y-Axis',
-                    options=[], style=drop_down_style_main),
-                  ],style=table_style_narrow_high),
+#### ----------  file saving   -----------------------------------------------
 
-        html.Div([dash_table.DataTable(id='files'),
-                dcc.Checklist(
-                    options=[
-                        {'label': 'png', 'value': 'png'},
-                        {'label': 'pdf', 'value': 'pdf'},
-                        {'label': 'fig', 'value': 'fig'},
-                        {'label': 'csv', 'value': 'csv'},
-                    ],
-                    value=['png', 'csv'],
-                labelStyle={'display': 'inline-block','color':'white','margin-right':'10px' }
+    html.Div([dash_table.DataTable(id='files'),
+            dcc.Checklist(
+                options=[
+                    {'label': 'png', 'value': 'png'},
+                    {'label': 'pdf', 'value': 'pdf'},
+                    {'label': 'fig', 'value': 'fig'},
+                    {'label': 'csv', 'value': 'csv'},
+                ],
+                value=['png', 'csv'],
+            labelStyle={'display': 'inline-block','color':'white','margin-right':'10px' }
 
-                ) ,
+            ) ,
 
-        html.Button('Save now', id='save_button',style={'display': 'inline-block','color':'white','margin-left':'60%','width':'35%',
-                  'border-radius':25,'text-align':'center','background':'grey',  'margin-right':'10px','margin-right':'10px'},),
-                  ],style=table_style_narrow),
-        html.Br(),
-        html.Br(),
-        html.Br(),
+    html.Button('Save now', id='save_button',style={'display': 'inline-block','color':'white','margin-left':'60%','width':'35%',
+              'border-radius':25,'text-align':'center','background':'grey',  'margin-right':'10px','margin-right':'10px'},),
+              ],style=table_style_narrow),
+    html.Br(),
+    html.Br(),
+    html.Br(),
+
+        ######### -------       scatter      RWW 1    --------
 
     html.Label("Scatter and line plots",
                    style=title_text_style),
@@ -410,8 +408,6 @@ html.Div([html.A('About this app', href='https://github.com/semework/semework',
         html.Br(),
 
     ######### -------       corr      RWW 2    --------
-    ######### -------       corr      RWW 2    --------
-    ######### -------       corr      RWW 2    --------
 
     html.Label("Correlation plots",
                    style=title_text_style),
@@ -429,8 +425,7 @@ html.Div([html.A('About this app', href='https://github.com/semework/semework',
         html.Br(),
 
     ######### -------       Pairplots      RWW 3    --------
-    ######### -------       Pairplots      RWW 3    --------
-    ######### -------       Pairplots      RWW 3    --------
+
 
     html.Label("Pairplots and distributions",
                    style=title_text_style),
@@ -449,16 +444,31 @@ html.Div([html.A('About this app', href='https://github.com/semework/semework',
         html.Br(),
 
     ######### -------       Variable importance      RWW 4    --------
-    ######### -------                                RWW 4   --------
-    ######### -------                                RWW 4    --------
 
     html.Label("Variable importance",
                    style=title_text_style),
 
         html.Div([
+
+        html.Div([html.A('what is variable importance?', href='https://github.com/semework/semework/blob/main/RF%20&%20variable%20importance.md',
+                 target='_blank')],
+                         style={
+                              'justify':'center',
+                              "margin-left": "35%",
+                              'width': '70%',
+                              'textAlign':'center',
+                              'height': '30px',
+                              'align':' center',
+                              'textAlign': 'center',
+                              'color':'white',
+                              'font-size': '100%',
+                                },),
+
+
             dcc.Graph(
                 id='variable_importance_bar',style=graph_panel_style,
-            )
+            ),
+
         ], style=graph_panel_style_left),
 
         html.Div([
@@ -467,9 +477,28 @@ html.Div([html.A('About this app', href='https://github.com/semework/semework',
 
         html.Br(),
         html.Br(),
+
+
+    ######### -------                                      RWW 8    --------
+
+    html.Label('Model performances',
+                   style=title_text_style),
+
+        html.Div([
+            dcc.Graph(
+                id='performance_whisker',style=graph_panel_style,
+            )
+        ], style=graph_panel_style_left),
+
+        html.Div([
+            dcc.Graph(id='roc',style=graph_panel_style),
+        ], style=graph_panel_style_right),
+
+        html.Br(),
+        html.Br(),
+
     ######### -------       PCA      RWW 5    --------
-    ######### -------                RWW 5    --------
-    ######### -------                 RWW 5    --------
+
 
     html.Label("PCA",
                    style=title_text_style),
@@ -489,8 +518,7 @@ html.Div([html.A('About this app', href='https://github.com/semework/semework',
 
         html.Br(),
     ######### -------      RF n dendrogram      RWW 6    --------
-    ######### -------                           RWW 6    --------
-    ######### -------                           RWW 6    --------
+
 
     html.Label("Trees and dendrograms",
                    style=title_text_style),
@@ -498,7 +526,6 @@ html.Div([html.A('About this app', href='https://github.com/semework/semework',
         html.Div([
             dcc.Graph(
                 id='RF_plot',style=graph_panel_style,
-                # hoverData={'points': [{'customdata': 'Japan'}]}
             )
         ], style=graph_panel_style_left),
 
@@ -511,8 +538,7 @@ html.Div([html.A('About this app', href='https://github.com/semework/semework',
         html.Br(),
 
     ######### -------      Network      RWW 7    --------
-    ######### -------                   RWW 7    --------
-    ######### -------                   RWW 7    --------
+
 
     html.Label(" Network plots",
                    style=title_text_style),
@@ -534,30 +560,6 @@ html.Div([html.A('About this app', href='https://github.com/semework/semework',
         html.Br(),
 
 
-
-    ######### -------      performance whisker and ROC     RWW 8    --------
-    ######### -------                                      RWW 8    --------
-    ######### -------                                      RWW 8    --------
-
-    html.Label('Model performances',
-                   style=title_text_style),
-
-        html.Div([
-            dcc.Graph(
-                id='performance_whisker',style=graph_panel_style,
-            )
-        ], style=graph_panel_style_left),
-
-        html.Div([
-            dcc.Graph(id='roc',style=graph_panel_style),
-        ], style=graph_panel_style_right),
-
-        html.Br(),
-        html.Br(),
-
-
-    ######### -------       performance and predictions      RWW 9    --------
-    ######### -------                                        RWW 9    --------
     ######### -------                                        RWW 9    --------
 
     html.Label("Model performance (precision, recall) and predictions by best model",
@@ -589,7 +591,8 @@ html.Div([html.A('About this app', href='https://github.com/semework/semework',
 # ((((((($($%($$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$)))))))))
 
 #%%
-def RF_predict(df1, target):
+def RF_predict(X,  y):
+
     rf = RandomForestRegressor(n_estimators = 100,
                                n_jobs = -1,
                                oob_score = True,
@@ -597,94 +600,42 @@ def RF_predict(df1, target):
                                random_state = 42)
 
 
-    numeric_transformer = Pipeline(steps=[
-        ('imputer', SimpleImputer(strategy='median')),
-        ('scaler', StandardScaler())])
+    X_train, X_test, y_train, y_test1  =  \
+            train_test_split(X, y, test_size = 0.2, random_state=42)
 
-    categorical_transformer = OneHotEncoder(handle_unknown='ignore')
+    rf_fitted_all = rf.fit(X_train, y_train)
 
-    # numeric_features = df1.select_dtypes(include=['int64', 'float64','int32', 'float32' ]).columns
-    # categorical_features = df1.select_dtypes(include=['object', 'bool' ]).columns
-    str_features = df1.select_dtypes(include=[ 'object','string']).columns
-
-    for i in str_features:
-        df1[i] = df1[i].astype('category').cat.codes
-        dfv = pd.get_dummies(df1, columns=[i], prefix=str(i)+'_oh')
-
-    colNames = dfv.columns
-
-    preprocessor = ColumnTransformer(transformers=[
-        ('num', numeric_transformer, selector(dtype_exclude=object)),
-        ('cat', categorical_transformer, selector(dtype_include=object))
-    ])
-    y = dfv[[target]].reset_index()
-    Xv =  dfv.drop(target, axis=1).reset_index()
-
-    colNames =  Xv.columns
-    X = preprocessor.fit_transform(Xv)
-    X_train, X_test, y_train, y_test  =  \
-            train_test_split(X, y,  test_size = 0.2, random_state=12345)
-
-    rf_fitted = rf.fit(X_train, y_train)
     X_train = pd.DataFrame(X_train)
-    X_train.columns = colNames
-    return rf_fitted, X_train.columns
+
+
+    y_test = np.array(y_test1).reshape(-1,1)
+
+    x = rf_fitted_all.feature_importances_
+
+    fi = pd.DataFrame({'feature': X_train.columns,
+                       'importance': x}).\
+                        sort_values('importance', ascending = True)
+
+    y_pred_all = rf_fitted_all.predict(X_test)
+
+    rf_fitted_imp = rf.fit(np.array(X_train[fi.feature[0]]).reshape(-1, 1), y_train)
+
+    y_pred_best = rf_fitted_imp.predict(y_test)
+
+
+    perf_all = return_accuracies(X_train, X_test, y_train, y_test, y_pred_all)
+    Xtr ,xts = np.array(X_train[fi.feature[0]]).reshape(-1, 1), np.array(X_test[fi.feature[0]]).reshape(-1, 1)
+
+    perf_best = return_accuracies(Xtr ,xts, y_train, y_test, y_pred_best)
+
+    perf = pd.concat([perf_all, perf_best],axis=1)
+
+    perf.columns = ['All features','Most important predector']
+    perf.index = 'r2_Score','adj_r2_score','MSE', 'MAE'
+
+    return  rf_fitted_all, y_pred_all, y_pred_best, y_test1, fi, fi.feature[0], perf
 
 #%%
-def clean_up_data(All_data, sparsity_thresh, NaN_thresh, corr_thresh):
-    indexer_errors = ['level_0','index']
-    for i in indexer_errors:
-        if i in All_data.columns:
-            All_data = All_data.drop(i, axis=1)
-
-    All_data = All_data.loc[:,~All_data.columns.duplicated()]
-    All_data = All_data.dropna(axis=1, how='all')
-    All_data = All_data.dropna(axis=0, how='all')
-    # All_data = All_data.loc[:, (All_data != All_data.iloc[0]).any()]
-    All_data = All_data.reset_index(drop=True)
-
-
-    # first  clean up data with sparsity analysis
-    # remove columns which are very sparsly populated as they might cause false results
-    # such as becoming very important in predictions despite having few real data points
-    # column 1 for this data is ID, so it can be repeated
-    sparse_cols = [((len(All_data.iloc[:,i].unique())/len(All_data))*100)  <  (int((1-sparsity_thresh)*len(All_data)))
-                   for  i  in range(0, All_data.shape[1] )]
-
-    #remove sparse columns (i.e. with too many redundant values)
-    All_data = All_data.iloc[:, sparse_cols]
-
-    #remove too-many NaN columns
-    non_NaN_cols = [All_data.iloc[:,i].isna().sum() < int(NaN_thresh*len(All_data)) for i in range(All_data.shape[1])]
-    All_data = All_data.iloc[:, non_NaN_cols]
-
-    # drop the pesky "Unnamed: 0" column, if exists
-    # this happens sometimes depending on which packes are used or the quality of the .CSV file
-
-    unNamedCols =   All_data.filter(regex='Unnamed').columns
-
-    if not unNamedCols.empty:
-        for i in unNamedCols:
-            if i in All_data.columns:
-                All_data = All_data.drop(i, axis=1)
-        # All_data4 = All_data.drop(unNamedCols), axis=1, inplace=True)
-
-    # drop highly correlated columns
-    cols = All_data.select_dtypes([np.number]).columns
-        # to dot that, first Create correlation matrix
-    corr_matrix = All_data.reindex(columns=cols).corr().abs()
-
-    # Select upper triangle of correlation matrix
-    upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(np.bool))
-
-    # Find index of feature columns with correlation greater than 0.95
-    to_drop = [column  for column in upper.columns if any(upper[column] > corr_thresh)]
-    # Drop Marked Features
-    All_data.drop(All_data[to_drop], axis=1)
-
-    return All_data
-#%%
-
 ###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%                                     corr
 def do_corr(df, imp_col=[]):
     # corr matrix
@@ -732,23 +683,9 @@ def plot_corrs(corr, imp_col=[]):
 #%%
 def scale_data(X_train,X_test,y_train,y_test):
 
-
-#        scaler_mat = Normalizer()
-#        #scaler for test/train array, model will be returned for inverse transform
-#        scaler_y = Normalizer()
-#
-
-#        scaler_mat = RobustScaler()
-#        #scaler for test/train array, model will be returned for inverse transform
-#        scaler_y = RobustScaler()
-#
     scaler_mat = StandardScaler()
     scaler_y = StandardScaler()
-#        #scaler for matrices
-#        scaler_mat = MinMaxScaler()
-#        #scaler for test/train array, model will be returned for inverse transform
-#        scaler_y = MinMaxScaler()
-#
+
     data_train = pd.DataFrame(X_train.reset_index(drop=True))
     data_test = pd.DataFrame(X_test.reset_index(drop=True))
     #fit and transform train and test matrices
@@ -756,7 +693,6 @@ def scale_data(X_train,X_test,y_train,y_test):
     data_train = scaler_mat.transform(data_train)
     scaler_mat.fit(data_test)
     data_test= scaler_mat.transform(data_test)
-
 
     if isinstance(y_train, (np.ndarray, np.generic) ):
         scaler_y.fit(pd.DataFrame(y_train))
@@ -777,178 +713,178 @@ def scale_data(X_train,X_test,y_train,y_test):
     return data_train, data_test, y_train_scaled.flatten(), y_test_scaled.flatten(), scaler_y,
 
 #%%
-def oob_regression_r2_score(rf, X_train, y_train):
-    """
-    Compute out-of-bag (OOB) R^2 for a scikit-learn random forest
-    regressor. We learned the guts of scikit's RF from the BSD licensed
-    code:
-    https://github.com/scikit-learn/scikit-learn/blob/a24c8b46/sklearn/ensemble/forest.py#L702
-    """
-    X = X_train.values if isinstance(X_train, pd.DataFrame) else X_train
-    y = y_train.values if isinstance(y_train, pd.Series) else y_train
 
-    n_samples = len(X)
-    predictions = np.zeros(n_samples)
-    n_predictions = np.zeros(n_samples)
+def r2_scores(y_true, y_pred):
+    return r2_score(y_true, y_pred)
 
-    for tree in rf.estimators_:
-        unsampled_indices = _generate_unsampled_indices(tree.random_state, n_samples)
-        tree_preds = tree.predict(X[unsampled_indices, :])
-        predictions[unsampled_indices] += tree_preds
-        n_predictions[unsampled_indices] += 1
+def adj_r2_score(r2, n, k):   # k stands for the number of predictors (regressors), n is sample size (row count)
 
-    if (n_predictions == 0).any():
-        warnings.warn("Too few trees; some variables do not have OOB scores.")
-        n_predictions[n_predictions == 0] = 1
+    ''' example models_and_methods.adj_r2_score(r2_test, X_test1.shape[0], X_test1.shape[1])) '''
 
-    predictions /= n_predictions
+    if (n-k-1) != 0:
+        r2sc = 1-((1-r2)*((n-1)/(n-k-1)))
+    else:
+        r2sc = 0
+    return r2sc
 
-    oob_score = r2_score(y, predictions)
-    return oob_score
+def mse1(y_true, y_pred):
+    return mean_squared_error(y_true.ravel(), np.array(y_pred).ravel())
 
-def oob_classifier_accuracy(rf, X_train, y_train):
-    """
-    Compute out-of-bag (OOB) accuracy for a scikit-learn random forest
-    classifier. We learned the guts of scikit's RF from the BSD licensed
-    code:
+def mae1(y_true, y_pred):
+    return median_absolute_error(y_true.ravel(), np.array(y_pred).ravel())
 
-    https://github.com/scikit-learn/scikit-learn/blob/a24c8b46/sklearn/ensemble/forest.py#L425
-    """
-    X = X_train.values
-    y = y_train.values
-
-    n_samples = len(X)
-    n_classes = len(np.unique(y))
-    predictions = np.zeros((n_samples, n_classes))
-
-    for tree in rf.estimators_:
-        unsampled_indices = _generate_unsampled_indices(tree.random_state, n_samples)
-        tree_preds = tree.predict_proba(X[unsampled_indices, :])
-        predictions[unsampled_indices] += tree_preds
-
-    predicted_class_indexes = np.argmax(predictions, axis=1)
-    predicted_classes = [rf.classes_[i] for i in predicted_class_indexes]
-
-    oob_score = np.mean(y == predicted_classes)
-    return oob_score
-
-def sample(X_valid, y_valid, n_samples):
-    if n_samples < 0: n_samples = len(X_valid)
-    n_samples = min(n_samples, len(X_valid))
-    if n_samples < len(X_valid):
-        ix = np.random.choice(len(X_valid), n_samples)
-        X_valid = X_valid.iloc[ix].copy(deep=False)  # shallow copy
-        y_valid = y_valid.iloc[ix].copy(deep=False)
-    return X_valid, y_valid
-
-
-def permutation_importances2(rf, X_train, y_train, metric, n_samples=-1):
-
-    imp,rf = permutation_importances_raw(rf, X_train, y_train, metric, n_samples)
-    I = pd.DataFrame(data={'Feature':X_train.columns, 'Importance':imp})
-    I = I.set_index('Feature')
-    I = I.sort_values('Importance', ascending=False)
-    return I,rf
-
-def permutation_importances_raw(rf, X_train, y_train, metric, n_samples=-1):
-    """
-    Return array of importances from pre-fit rf; metric is function
-    that measures accuracy or R^2 or similar. This function
-    works for regressors and classifiers.
-    """
-
-    X_sample, y_sample = sample(X_train, y_train, n_samples)
-
-    if not hasattr(rf, 'estimators_'):
-        rf.fit(X_sample, y_sample)
-
-    baseline = metric(rf, X_sample, y_sample)
-    X_train = X_sample.copy(deep=False) # shallow copy
-    y_train = y_sample
-    imp = []
-    for col in X_train.columns:
-        save = X_train[col].copy()
-        X_train[col] = np.random.permutation(X_train[col])
-        m = metric(rf, X_train, y_train)
-        X_train[col] = save
-        drop_in_metric = baseline - m
-        imp.append(drop_in_metric)
-    return np.array(imp),rf
 
 #%%
-def over_all_var_importance(predict_binary,ylabel_text,save_fig,results_path,X_train,y_train,plot_importance_ranks):
+def return_accuracies(X_train, X_test, y_train, y_test, y_pred):
+            ##%% 1 r2score
+    R2Score =   r2_scores(y_test, y_pred)
 
-    RANDOM_STATE = 999
+    #%% 2
+    adjr2 =   adj_r2_score(R2Score, X_test.shape[0], X_test.shape[1])
 
-    if predict_binary == 1:
-        rf = RandomForestClassifier(n_estimators=100,  warm_start=True,
-     # better generality with 5
-     min_samples_leaf=5, n_jobs=-1, oob_score=True, max_features="sqrt",
-                           random_state=RANDOM_STATE)
+    #%% 3
+    MSE =  mse1(y_test, y_pred)
+
+    #%% 4  median absolute error
+
+    MAE =  mae1(y_test, y_pred)
+
+
+    return pd.DataFrame([R2Score, adjr2, MSE, MAE ])
+#%%
+def clean_up_data(All_data, sparsity_thresh, NaN_thresh, corr_thresh):
+    indexer_errors = ['level_0','index']
+    for i in indexer_errors:
+        if i in All_data.columns:
+            All_data = All_data.drop(i, axis=1)
+
+    All_data = All_data.loc[:,~All_data.columns.duplicated()]
+    All_data = All_data.dropna(axis=1, how='all')
+    All_data = All_data.dropna(axis=0, how='all')
+    # All_data = All_data.loc[:, (All_data != All_data.iloc[0]).any()]
+    All_data = All_data.reset_index(drop=True)
+
+
+    # first  clean up data with sparsity analysis
+    # remove columns which are very sparsly populated as they might cause false results
+    # such as becoming very important in predictions despite having few real data points
+    # column 1 for this data is ID, so it can be repeated
+    sparse_cols = [((len(All_data.iloc[:,i].unique())/len(All_data))*100)  <  (int((1-sparsity_thresh)*len(All_data)))
+                   for  i  in range(0, All_data.shape[1] )]
+
+    #remove sparse columns (i.e. with too many redundant values)
+    All_data = All_data.iloc[:, sparse_cols]
+
+    #remove too-many NaN columns
+    non_NaN_cols = [All_data.iloc[:,i].isna().sum() < int(NaN_thresh*len(All_data)) for i in range(All_data.shape[1])]
+    All_data = All_data.iloc[:, non_NaN_cols]
+
+
+    unNamedCols =   All_data.filter(regex='Unnamed').columns
+
+    if not unNamedCols.empty:
+        for i in unNamedCols:
+            if i in All_data.columns:
+                All_data = All_data.drop(i, axis=1)
+
+    # drop highly correlated columns
+    cols = All_data.select_dtypes([np.number]).columns
+        # to dot that, first Create correlation matrix
+    corr_matrix = All_data.reindex(columns=cols).corr().abs()
+
+    upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(np.bool))
+
+    to_drop = [column  for column in upper.columns if any(upper[column] > corr_thresh)]
+    # Drop Marked Features
+    All_data.drop(All_data[to_drop], axis=1)
+
+    return All_data
+
+def data_processing(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
+                xaxis_type, yaxis_type, data_selection, datasize):
+
+    df1 = pd.DataFrame(rows)
+    df1 = df1.convert_dtypes()
+    df1 = df1.sample(frac=datasize/100)
+
+    numeric_features = df1.select_dtypes(include=['int64', 'float64','int32', 'float32' ]).columns
+    str_features = df1.select_dtypes(include=[ 'object','string']).columns
+
+
+    if data_selection == 'None':
+        df1 = df1
+    elif data_selection == 'Categorical' and len(str_features) > 0:
+        df1 = df1[[str_features]]
+    elif data_selection == 'Numerical'  and len(numeric_features) > 0:
+        df1 = df1[[numeric_features]]
     else:
-        rf = RandomForestRegressor(n_estimators=100,random_state=RANDOM_STATE, n_jobs=-1, oob_score=True)
+        df1 = df1
 
-    o_X = X_train.copy().astype(np.int64)
-    o_y = y_train.copy().astype(np.int64)
+    df1 =  clean_up_data(df1, sparsity_thresh, NaN_thresh, corr_thresh)
 
-    if predict_binary == 0:
-        o_X = X_train.copy().astype(np.float)
-        o_y = y_train.copy().astype(np.float)
+    numeric_transformer = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='median')),
+        ('scaler', StandardScaler())])
 
-    rf.fit(o_X,o_y)
+    categorical_transformer = OneHotEncoder(handle_unknown='ignore')
+    preprocessor1 = ColumnTransformer(transformers=[
+        ('num', numeric_transformer, selector(dtype_exclude=object)),
+        ('cat', categorical_transformer, selector(dtype_include=object))
+    ])
+    numeric_features = df1.select_dtypes(include=['int64', 'float64','int32', 'float32' ]).columns
 
-    if isinstance(rf, RandomForestClassifier):
-       imp,rf =  permutation_importances2(rf, pd.DataFrame(o_X), pd.DataFrame(o_y),
-                                  oob_classifier_accuracy)
-    elif isinstance(rf, RandomForestRegressor):
-       imp,rf =  permutation_importances2(rf,pd.DataFrame(o_X), pd.DataFrame(o_y),
-                                   oob_regression_r2_score)
+    str_features = df1.select_dtypes(include=[ 'object','string']).columns
+
+    cols = df1.columns
+
+    if len(str_features) > 0:
+        for i in str_features:
+            df1[i] = df1[i].astype('category').cat.codes
+
+    dfv = df1.copy()
 
 
-    imp_pos = pd.DataFrame()
-    if 'R_A_N_D_O_M' in list(imp.index):
-        stop_at_MSE = min(np.where(imp.values > 0)[0][-1], np.where(imp.index=='R_A_N_D_O_M')[0][-1])
+    df1 = pd.DataFrame(preprocessor1.fit_transform(dfv))
+
+    return df1, str_features, numeric_features, cols
+
+def data_transformation(df1, target):
+
+    numeric_transformer = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='median')),
+        ('scaler', StandardScaler())])
+
+    categorical_transformer = OneHotEncoder(handle_unknown='ignore')
+
+    preprocessor1 = ColumnTransformer(transformers=[
+        ('num', numeric_transformer, selector(dtype_exclude=object)),
+        ('cat', categorical_transformer, selector(dtype_include=object))
+    ])
+
+    str_features = df1.select_dtypes(include=[ 'object','string']).columns
+
+    if len(str_features) > 0:
+        for i in str_features:
+            df1[i] = df1[i].astype('category').cat.codes
+            dfv = pd.get_dummies(df1, columns=[i], prefix=str(i)+'_oh')
     else:
-        stop_at_MSE =  np.where(imp.values > 0)[0][-1]
+        dfv = df1.copy()
 
-    if np.array(stop_at_MSE).size>0:
-        imp_pos = imp.iloc[:stop_at_MSE+1]
+    y = pd.DataFrame(dfv[[target]].values).reset_index()[0]
 
+    Xv =  dfv.drop(target, axis=1).reset_index()
 
-    print('rf is: ', rf)
+    colNames = Xv.columns
 
-    return imp, imp_pos, rf
-#%% var imp
+    colNames = colNames[colNames != 'index']
 
-def var_imp(df1, target):
+    Xv = Xv[colNames]
 
-    X = df1[[df1.columns != target]]
+    rows = pd.DataFrame(preprocessor1.fit_transform(Xv))
 
-    y = df1[[target]]
+    rows.columns = colNames
 
-
-    X_train, X_test, y_train, y_test  =  \
-            train_test_split(X, y,  test_size = 0.4, random_state=12345)
-    colNames =  X_train.columns
-    X_train, X_test, y_train, y_test, scaler_y =  scale_data(X_train, X_test, y_train, y_test)
-
-    y_test = pd.DataFrame(y_test.astype(np.int64))
-    y_train = pd.DataFrame(y_train.astype(np.int64))
-
-    # put column names back
-    X_train = pd.DataFrame(X_train)
-    X_test = pd.DataFrame(X_test)
-
-    X_train.columns = colNames
-
-    X_test.columns = colNames
-
-    X_train = X_train.assign(R_A_N_D_O_M=np.random.random(size=len(y_train)))
-    X_test= X_test.assign(R_A_N_D_O_M=np.random.random(size=len(y_test)))
-
-    imp, imp_pos, rf =  over_all_var_importance(predict_binary,X_train,y_train,plot_importance_ranks)
-    return imp_pos
-
+    return rows, y, colNames
 
 #%%   pair and freq
 def parse_contents(contents, filename):
@@ -959,19 +895,18 @@ def parse_contents(contents, filename):
 
         try:
             if 'csv' in filename:
-                # Assume that the user uploaded a CSV file
                 df = pd.read_csv(
                     io.StringIO(decoded.decode('utf-8')) )
             elif 'xlsx' in filename:
-                # Assume that the user uploaded an excel file
-                df = pd.read_excel(io.BytesIO(decoded)  )
+
+                df = pd.read_excel(io.BytesIO(decoded) )
 
         except Exception as e:
             print(e)
             return html.Div([
                 'There was an error processing this file.'
             ])
-        unNamedCols =   df.filter(regex='Unnamed').columns
+        unNamedCols = df.filter(regex='Unnamed').columns
 
         if not unNamedCols.empty:
             for i in unNamedCols:
@@ -988,65 +923,82 @@ def parse_contents(contents, filename):
               Output('datatable-upload-container', 'columns'),
               Input('datatable-upload', 'contents'),
               State('datatable-upload', 'filename'))
+
+
 def update_output(contents, filename):
     if contents is None:
         return [{}], []
     df_uploaded = parse_contents(contents, filename)
-    # df_uploaded = clean_up_data(df_uploaded , sparsity_thresh, NaN_thresh, corr_thresh)
 
-    # process_pipeline(df)
     return df_uploaded.to_dict('records'), [{"name": i, "id": i} for i in df_uploaded.columns]
 
-# update y-dropdown
-@app.callback(Output('crossfilter-yaxis-column', 'options'),
-              [Input('datatable-upload', 'contents'),
-                Input('datatable-upload', 'filename'),
-                Input("data_selection_radio", "value"),
-                    ])
-
-def update_y_dropdown(contents, filename, data_selection ):
-    if contents is not None:
-        df1 = parse_contents(contents, filename)
-
-        if data_selection == 'None':
-            df1 = df1
-        elif data_selection == 'Categorical':
-            df1 = df1.select_dtypes(['category'])
-        elif data_selection == 'Numerical':
-            df1 = df1.select_dtypes(include=np.number)
-        else:
-            df1 = df1
-        df1 =  clean_up_data(df1, sparsity_thresh, NaN_thresh, corr_thresh)
-
-        columns = df1.columns.values.tolist()
-        if df1 is not None:
-            return [ {'label': x, 'value': x} for x in columns ]
-        else:
-            return []
-    else:
-        return []
 
 # update x-dropdown
 @app.callback(Output('dropdown_target', 'options'),
               [Input('datatable-upload', 'contents'),
                Input('datatable-upload', 'filename'),
                    Input("data_selection_radio", "value"),])
-def update_target_dropdown(contents, filename,data_selection ):
+
+def update_target_dropdown(contents, filename, data_selection):
     if contents is not None:
         df1 = parse_contents(contents, filename)
+        df1 = df1.convert_dtypes()
+        numeric_features = df1.select_dtypes(include=['int64', 'float64','int32', 'float32' ]).columns
+        str_features = df1.select_dtypes(include=[ 'object','string']).columns
 
         if data_selection == 'None':
             df1 = df1
-        elif data_selection == 'Categorical':
-            df1 = df1.select_dtypes(['category'])
-        elif data_selection == 'Numerical':
-            df1 = df1.select_dtypes(include=np.number)
+        elif data_selection == 'Categorical' and len(str_features) > 0:
+            df1 = df1[[str_features]]
+        elif data_selection == 'Numerical'  and len(numeric_features) > 0:
+            df1 = df1[[numeric_features]]
         else:
             df1 = df1
 
-        columns = df1.columns.tolist()
+        df1, str_features, numeric_features,  columnsN  = data_processing(df1, target, hoverData,
+                    xaxis_column_name, yaxis_column_name,
+                    xaxis_type, yaxis_type, data_selection, datasize)
+
+        columns = columnsN.tolist()
+
         if df1 is not None:
-            return [ {'label': x, 'value': x} for x in columns ]
+            return [ {'label': x, 'value': x} for x in columns]
+        else:
+            return []
+    else:
+        return []
+
+# update y-dropdown
+@app.callback(Output('crossfilter-yaxis-column', 'options'),
+              [Input('datatable-upload', 'contents'),
+                Input('datatable-upload', 'filename'),
+                Input("data_selection_radio", "value"),])
+
+def update_y_dropdown(contents, filename, data_selection ):
+    if contents is not None:
+        df1 = parse_contents(contents, filename)
+        df1 = df1.convert_dtypes()
+        numeric_features = df1.select_dtypes(include=['int64', 'float64','int32', 'float32' ]).columns
+        str_features = df1.select_dtypes(include=[ 'object','string']).columns
+
+
+        if data_selection == 'None':
+            df1 = df1
+        elif data_selection == 'Categorical' and len(str_features) > 0:
+            df1 = df1[[str_features]]
+        elif data_selection == 'Numerical'  and len(numeric_features) > 0:
+            df1 = df1[[numeric_features]]
+        else:
+            df1 = df1
+
+        df1, str_features, numeric_features,   columnsN  = data_processing(df1, target, hoverData,
+                    xaxis_column_name, yaxis_column_name,
+                    xaxis_type, yaxis_type, data_selection, datasize)
+
+        columns =  columnsN.tolist()
+
+        if df1 is not None:
+            return [ {'label': x, 'value': x} for x in columns]
         else:
             return []
     else:
@@ -1059,55 +1011,42 @@ def update_target_dropdown(contents, filename,data_selection ):
                Input('datatable-upload', 'filename'),
                    Input("data_selection_radio", "value"),])
 
-
-def update_x_dropdown(contents, filename,  data_selection ):
+def update_x_dropdown(contents, filename, data_selection):
 
     if contents is not None:
 
         df1 = parse_contents(contents, filename)
+        df1 = df1.convert_dtypes()
+        numeric_features = df1.select_dtypes(include=['int64', 'float64','int32', 'float32' ]).columns
+        str_features = df1.select_dtypes(include=[ 'object','string']).columns
+
 
         if data_selection == 'None':
             df1 = df1
-        elif data_selection == 'Categorical':
-            df1 = df1.select_dtypes(['category'])
-        elif data_selection == 'Numerical':
-            df1 = df1.select_dtypes(include=np.number)
+        elif data_selection == 'Categorical' and len(str_features) > 0:
+            df1 = df1[[str_features]]
+        elif data_selection == 'Numerical'  and len(numeric_features) > 0:
+            df1 = df1[[numeric_features]]
         else:
             df1 = df1
 
+        df1, str_features, numeric_features,  columnsN  = data_processing(df1, target, hoverData,
+                    xaxis_column_name, yaxis_column_name,
+                    xaxis_type, yaxis_type, data_selection, datasize)
 
-        columns = df1.columns.tolist()
+        columns =  columnsN.tolist()
 
         if df1 is not None:
-            return [ {'label': x, 'value': x} for x in columns ]
+            return [ {'label': x, 'value': x} for x in columns]
         else:
             return []
     else:
         return []
 
-
-def data_processing(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
-                xaxis_type, yaxis_type, data_selection, datasize):
-    df1 = pd.DataFrame(rows)
-    #df1 = df1.convert_dtypes()
-    df1 = df1.sample(frac=datasize/100)
-
-
-    if data_selection == 'None':
-        df1 = df1
-    elif data_selection == 'Categorical':
-        df1 = df1.select_dtypes(['category'])
-    elif data_selection == 'Numerical':
-        df1 = df1.select_dtypes(include=np.number)
-    else:
-        df1 = df1
-    df1 =  clean_up_data(df1, sparsity_thresh, NaN_thresh, corr_thresh)
-
-    return df1
-
-#################################################################################
+###############################################################################
 #                crossfilter-indicator-scatter
-#################################################################################
+###############################################################################
+
 @app.callback(
     Output('crossfilter-indicator-scatter', 'figure'),
     Input('datatable-upload-container', 'data'),
@@ -1119,66 +1058,122 @@ def data_processing(rows, target, hoverData, xaxis_column_name, yaxis_column_nam
     Input('crossfilter-yaxis-type', 'value'),
     Input("data_selection_radio", "value"),
     Input("dataSlider", "value"),
-    prevent_initial_call=True
-    )
+    prevent_initial_call=True)
+
 def update_scat(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
                 xaxis_type, yaxis_type, data_selection, datasize):
+
+
     df1 = pd.DataFrame(rows)
 
-    df1 = data_processing(df1, target, hoverData, xaxis_column_name, yaxis_column_name,
-                xaxis_type, yaxis_type, data_selection, datasize)
-
-    try:
-        fig = go.Figure()
-
-        fig.add_trace(go.Scatter(
-            x=df1[xaxis_column_name], y=df1[target],
-            name='sin',
-            mode='markers',
-            marker_color='rgba(152, 0,100, .8)'
-        ))
-
-        # Set options common to all traces with fig.update_traces
-        fig.update_traces(mode='markers', marker_line_width=3, marker_size=13)
-        fig.update_layout(title='Scatter',
-                          yaxis_zeroline=False, xaxis_zeroline=False)
-
-        fig.update_xaxes(title=xaxis_column_name, type='linear' if xaxis_type == 'Linear' else 'log')
-
-        fig.update_yaxes(title=yaxis_column_name, type='linear' if yaxis_type == 'Linear' else 'log')
-
-        fig.update_layout(margin={'l': 40, 'b': 40, 't': 20, 'r': 10}, hovermode='closest')
-
-
-    except:
-        fig = {
-            'data': [{
+    if (df1.empty or len(df1.columns) < 1):
+        fig = {'data': [{
                 'x': [],
                 'y': [],
                 'type': 'scatter'
             }]
         }
-    return fig
+        return fig
+    else:
+        if target:
+            df1, str_features, numeric_features,  columnsN  = data_processing(df1, target, hoverData,
+                        xaxis_column_name, yaxis_column_name,
+                        xaxis_type, yaxis_type, data_selection, datasize)
 
+            df1.columns = columnsN
+
+            df1 = df1.convert_dtypes()
+            numeric_features = df1.select_dtypes(include=['int64', 'float64','int32', 'float32' ]).columns
+            str_features = df1.select_dtypes(include=[ 'object','string']).columns
+
+            if data_selection == 'None':
+                df1 = df1
+            elif data_selection == 'Categorical' and len(str_features) > 0:
+                df1 = df1[[str_features]]
+            elif data_selection == 'Numerical'  and len(numeric_features) > 0:
+                df1 = df1[[numeric_features]]
+            else:
+                df1 = df1
+
+        title = ( str(target) + ' vs '+ str(xaxis_column_name))
+
+    return create_scatter(df1, xaxis_type, yaxis_type, xaxis_column_name, yaxis_column_name, title, target)#fig
 
 #################################################################################
 
+def create_scatter(dff, xaxis_type, yaxis_type, xaxis_column_name, yaxis_column_name, title, target):
 
 
-def create_time_series(dff, axis_type, ydata, title, target):
+    fig = px.scatter(dff, x=xaxis_column_name, y=target, title=title)
 
-    fig = px.scatter(dff, x=ydata, y=target)
-    fig.update_traces(mode='lines+markers')
     fig.update_xaxes(showgrid=False)
-    fig.update_yaxes(type='linear' if axis_type == 'Linear' else 'log')
+
     fig.add_annotation(x=0, y=0.85, xanchor='left', yanchor='bottom',
                        xref='paper', yref='paper', showarrow=False, align='left',
-                       bgcolor='rgba(255, 255, 255, 0.5)', text=title)
+                       bgcolor='rgba(255, 255, 255, 0.5)' )
 
-    fig.update_layout(height=225, margin={'l': 20, 'b': 30, 'r': 10, 't': 10})
+    fig.update_traces(mode='markers', marker_line_width=[3]*len(dff),
+                      marker_size=[20]*len(dff) )
+
+    fig.update_xaxes(title=xaxis_column_name, type='linear' if xaxis_type == 'Linear' else 'log')
+    fig.update_yaxes(title=yaxis_column_name, type='linear' if yaxis_type == 'Linear' else 'log')
+
+    fig.update_layout(margin={'l': 50, 'b': 50, 't': 50, 'r': 50}, hovermode='closest')
+
+
+    fig.update_layout(
+        font_family="Courier New",
+        font_color="black",
+        title_font_family="Times New Roman",
+        title_font_color="red",
+        title_font_size =15,
+        legend_title_font_color="black"
+    )
+
+
+    fig.update_layout(
+        title={
+            'y':1 ,
+            'x':0.5,
+            'font_size':20,
+            'xanchor': 'center',
+            'yanchor': 'top'})
 
     return fig
+#################################################################################
 
+def create_time_series(dff, xaxis_type, yaxis_type, ydata, title, target):
+
+    fig = px.scatter(dff, x=ydata, y=target, title=title)
+    fig.update_traces(mode='lines+markers')
+    fig.update_xaxes(showgrid=False)
+    fig.update_xaxes(type='linear' if xaxis_type == 'Linear' else 'log')
+    fig.update_yaxes(type='linear' if yaxis_type == 'Linear' else 'log')
+    fig.add_annotation(x=0, y=0.85, xanchor='left', yanchor='bottom',
+                       xref='paper', yref='paper', showarrow=False, align='left',
+                       bgcolor='rgba(255, 255, 255, 0.5)' )
+
+    fig.update_layout(height=225, margin={'l': 30, 'b': 30, 'r': 30, 't': 30})
+
+
+    fig.update_layout(
+        font_family="Courier New",
+        font_color="black",
+        title_font_family="Times New Roman",
+        title_font_color="red",
+        title_font_size =15,
+        legend_title_font_color="black"
+    )
+
+    fig.update_layout(
+        title={
+            'y':1 ,
+            'x':0.5,
+            'font_size':20,
+            'xanchor': 'center',
+            'yanchor': 'top'})
+
+    return fig
 
 @app.callback(
     dash.dependencies.Output('x-time-series', 'figure'),
@@ -1191,28 +1186,45 @@ def create_time_series(dff, axis_type, ydata, title, target):
     Input('crossfilter-yaxis-type', 'value'),
     Input("data_selection_radio", "value"),
     Input("dataSlider", "value"),
-    prevent_initial_call=True
-    )
+    prevent_initial_call=True)
 
 def update_y_timeseries(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
                 xaxis_type, yaxis_type, data_selection, datasize):
+
     df1 = pd.DataFrame(rows)
 
-
-    df1 = data_processing(df1, target, hoverData, xaxis_column_name, yaxis_column_name,
-                xaxis_type, yaxis_type, data_selection, datasize)
-
     if (df1.empty or len(df1.columns) < 1):
-        df1 = {
-            'data': [{
+        fig = {'data': [{
                 'x': [],
                 'y': [],
                 'type': 'scatter'
             }]
         }
-        # xaxis_type, xaxis_column_name, yaxis_column_name, title = 'Linear','Linear','',''
-    title = '<b>{}</b><br>{}'.format(target, yaxis_column_name)
-    return create_time_series(df1, yaxis_type, yaxis_column_name, title, target)
+        return fig
+    else:
+        if target:
+            df1, str_features, numeric_features,  columnsN  = data_processing(df1, target, hoverData,
+                        xaxis_column_name, yaxis_column_name,
+                        xaxis_type, yaxis_type, data_selection, datasize)
+
+            df1.columns = columnsN
+
+            df1 = df1.convert_dtypes()
+            numeric_features = df1.select_dtypes(include=['int64', 'float64','int32', 'float32' ]).columns
+            str_features = df1.select_dtypes(include=[ 'object','string']).columns
+
+            if data_selection == 'None':
+                df1 = df1
+            elif data_selection == 'Categorical' and len(str_features) > 0:
+                df1 = df1[[str_features]]
+            elif data_selection == 'Numerical'  and len(numeric_features) > 0:
+                df1 = df1[[numeric_features]]
+            else:
+                df1 = df1
+
+        title = ( str(target) + ' vs '+ str(yaxis_column_name))
+
+        return create_time_series(df1,  xaxis_type, yaxis_type, yaxis_column_name, title, target)
 
 @app.callback(
     dash.dependencies.Output('y-time-series', 'figure'),
@@ -1227,25 +1239,42 @@ def update_y_timeseries(rows, target, hoverData, xaxis_column_name, yaxis_column
     Input("dataSlider", "value"),
     prevent_initial_call=True
     )
+
 def update_x_timeseries(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
                 xaxis_type, yaxis_type, data_selection, datasize):
     df1 = pd.DataFrame(rows)
-    df1 = data_processing(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
-                xaxis_type, yaxis_type, data_selection, datasize)
-
     if (df1.empty or len(df1.columns) < 1):
-        df1 = {'data': [{
+        fig = {'data': [{
                 'x': [],
                 'y': [],
                 'type': 'scatter'
             }]
         }
-        # xaxis_type, xaxis_column_name, yaxis_column_name, title = 'Linear','Linear','',''
+        return fig
+    else:
+        if target:
+            df1, str_features, numeric_features,  columnsN  = data_processing(df1, target, hoverData,
+                        xaxis_column_name, yaxis_column_name,
+                        xaxis_type, yaxis_type, data_selection, datasize)
 
-    title = '<b>{}</b><br>{}'.format(target, xaxis_column_name)
-    return create_time_series(df1, xaxis_type, xaxis_column_name, title, target)
+            df1.columns = columnsN
+
+            df1 = df1.convert_dtypes()
+            numeric_features = df1.select_dtypes(include=['int64', 'float64','int32', 'float32' ]).columns
+            str_features = df1.select_dtypes(include=[ 'object','string']).columns
 
 
+            if data_selection == 'None':
+                df1 = df1
+            elif data_selection == 'Categorical' and len(str_features) > 0:
+                df1 = df1[[str_features]]
+            elif data_selection == 'Numerical'  and len(numeric_features) > 0:
+                df1 = df1[[numeric_features]]
+            else:
+                df1 = df1
+
+        title = ( str(target) + ' vs '+ str(xaxis_column_name))
+        return create_time_series(df1, xaxis_type, yaxis_type, xaxis_column_name, title, target)
 
 #################################################################################
 #                correlationPlot
@@ -1267,29 +1296,159 @@ def update_x_timeseries(rows, target, hoverData, xaxis_column_name, yaxis_column
 def update_corr_heatmap(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
                 xaxis_type, yaxis_type, data_selection, datasize):
     df1 = pd.DataFrame(rows)
+    if (df1.empty or len(df1.columns) < 1):
+        fig = {'data': [{
+                'x': [],
+                'y': [],
+                'type': 'scatter'
+            }]
+        }
+    else:
+        if target:
+            df1, str_features, numeric_features,  columnsN  = data_processing(df1, target, hoverData,
+                        xaxis_column_name, yaxis_column_name,
+                        xaxis_type, yaxis_type, data_selection, datasize)
 
-    try:
 
-        # corr =  df1.corr(method='pearson')
-        corr, colls =  do_corr(df1, imp_col=target)
-        # corr =  df1.corr(method='pearson')
-        fig = px.imshow(corr)
+            df1.columns = columnsN
 
-    except:
-        try:
+            df1 = df1.convert_dtypes()
+            numeric_features = df1.select_dtypes(include=['int64', 'float64','int32', 'float32' ]).columns
+            str_features = df1.select_dtypes(include=[ 'object','string']).columns
+
+
+            if data_selection == 'None':
+                df1 = df1
+            elif data_selection == 'Categorical' and len(str_features) > 0:
+                df1 = df1[[str_features]]
+            elif data_selection == 'Numerical'  and len(numeric_features) > 0:
+                df1 = df1[[numeric_features]]
+            else:
+                df1 = df1
+            # try:
+            title = ( str(target) + ' and its correlation with other vars')
+
+
             corr, colls =  do_corr(df1, imp_col=target)
             fig = px.imshow(corr)
 
-        except:
-            fig = {
-                'data': [{
-                    'x': [],
-                    'y': [],
-                    'type': 'scatter'
-                }]
-            }
+            fig.update_layout(title=title, yaxis_zeroline=False, xaxis_zeroline=False)
+            fig.update_layout(
+                font_family="Courier New",
+                font_color="black",
+                title_font_family="Times New Roman",
+                title_font_color="red",
+                title_font_size =15,
+                legend_title_font_color="black"
+            )
+
+            fig.update_layout(
+                title={
+                    'y':1 ,
+                    'x':0.5,
+                    'font_size':20,
+                    'xanchor': 'center',
+                    'yanchor': 'top'})
+        else:
+                fig = {'data': [{
+                'x': [],
+                'y': [],
+                'type': 'scatter'
+            }]
+        }
+
     return fig
 
+#################################################################################
+#                correlationPlot
+#################################################################################
+
+@app.callback(
+    Output('corr_network', 'figure'),
+    Input('datatable-upload-container', 'data'),
+    Input('dropdown_target', 'value'),
+    Input('crossfilter-indicator-scatter', 'hoverData'),
+    Input('crossfilter-xaxis-column', 'value'),
+    Input('crossfilter-yaxis-column', 'value'),
+    Input('crossfilter-xaxis-type', 'value'),
+    Input('crossfilter-yaxis-type', 'value'),
+    Input("data_selection_radio", "value"),
+    Input("dataSlider", "value"),
+    prevent_initial_call=True
+    )
+def update_corr_nx(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
+                xaxis_type, yaxis_type, data_selection, datasize):
+    df1 = pd.DataFrame(rows)
+    if (df1.empty or len(df1.columns) < 1):
+        fig = {'data': [{
+                'x': [],
+                'y': [],
+                'type': 'scatter'
+            }]
+        }
+    else:
+        if target:
+            df1, str_features, numeric_features,  columnsN  = data_processing(df1, target, hoverData,
+                        xaxis_column_name, yaxis_column_name,
+                        xaxis_type, yaxis_type, data_selection, datasize)
+
+            df1.columns = columnsN
+
+            df1 = df1.convert_dtypes()
+            numeric_features = df1.select_dtypes(include=['int64', 'float64','int32', 'float32' ]).columns
+            str_features = df1.select_dtypes(include=[ 'object','string']).columns
+
+
+            if data_selection == 'None':
+                df1 = df1
+            elif data_selection == 'Categorical' and len(str_features) > 0:
+                df1 = df1[[str_features]]
+            elif data_selection == 'Numerical'  and len(numeric_features) > 0:
+                df1 = df1[[numeric_features]]
+            else:
+                df1 = df1
+            # try:
+            title = ( str(target) + ' and its correlation with other vars, network')
+
+            corr, colls =  do_corr(df1, imp_col=target)
+            links = corr.stack().reset_index()
+            links.columns = ['var1', 'var2', 'value']
+            links_filtered = links.loc[ (links['value'] > 0 ) & (links['var1'] != links['var2']) ]
+
+            # Build your graph
+            G=nx.from_pandas_edgelist(links_filtered, 'var1', 'var2')
+
+            # Plot the network:
+            fig = nx.draw(G, with_labels=True, node_color='orange', node_size=400, edge_color='black',
+                    linewidths=1, font_size=15)
+
+            fig.update_layout(title=title, yaxis_zeroline=False, xaxis_zeroline=False)
+            fig.update_layout(
+                font_family="Courier New",
+                font_color="black",
+                title_font_family="Times New Roman",
+                title_font_color="red",
+                title_font_size =15,
+                legend_title_font_color="black"
+            )
+
+
+            fig.update_layout(
+                title={
+                    'y':1 ,
+                    'x':0.5,
+                    'font_size':20,
+                    'xanchor': 'center',
+                    'yanchor': 'top'})
+        else:
+                fig = {'data': [{
+                'x': [],
+                'y': [],
+                'type': 'scatter'
+            }]
+        }
+
+    return fig
 
 @app.callback(
     Output('distributions', 'figure'),
@@ -1317,6 +1476,30 @@ def update_correlation_d_plot(rows, target, hoverData, xaxis_column_name, yaxis_
             fig = px.histogram(df1, x=yaxis_column_name,
                                    histnorm='percent',
                                    nbins = 10)
+
+            title = ('Variable and their distributions'  )
+
+            fig.update_layout(title=title, yaxis_zeroline=False, xaxis_zeroline=False),
+
+            fig.update_layout(margin={'l': 50, 'b': 50, 't': 50, 'r': 50})
+
+            fig.update_layout(
+                font_family="Courier New",
+                font_color="black",
+                title_font_family="Times New Roman",
+                title_font_color="red",
+                title_font_size =20,
+                legend_title_font_color="Black"
+            )
+
+            fig.update_layout(
+                title={
+                    'y':1,
+                    'x':0.5,
+                    'font_size':20,
+                    'xanchor': 'center',
+                    'yanchor': 'top'})
+
         except:
             fig = {
                 'data': [{
@@ -1338,8 +1521,7 @@ def update_correlation_d_plot(rows, target, hoverData, xaxis_column_name, yaxis_
     Input('crossfilter-yaxis-type', 'value'),
     Input("data_selection_radio", "value"),
     Input("dataSlider", "value"),
-    prevent_initial_call=True
-    )
+    prevent_initial_call=True)
 
 def update_pairplot_grpah1(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
                 xaxis_type, yaxis_type, data_selection, datasize):
@@ -1370,11 +1552,295 @@ def update_pairplot_grpah1(rows, target, hoverData, xaxis_column_name, yaxis_col
             }
     return fig
 
-
-
-# Create graph component and populate with scatter plot
+#################################################################################
+#               variable_importance_bar generate df
+#################################################################################
 @app.callback(
-    Output('performance_whisker', 'figure'),
+    dash.dependencies.Output('variable_importance_bar', 'figure'),
+    Input('datatable-upload-container', 'data'),
+    Input('dropdown_target', 'value'),
+    Input('crossfilter-indicator-scatter', 'hoverData'),
+    Input('crossfilter-xaxis-column', 'value'),
+    Input('crossfilter-yaxis-column', 'value'),
+    Input('crossfilter-xaxis-type', 'value'),
+    Input('crossfilter-yaxis-type', 'value'),
+    Input("data_selection_radio", "value"),
+    Input("dataSlider", "value"),
+    prevent_initial_call=True
+    )
+#################################################################################
+#               variable_importance_bar generate bar fig
+#################################################################################
+def variable_importance_generator(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
+                xaxis_type, yaxis_type, data_selection, datasize):
+    df1 = pd.DataFrame(rows)
+    if (df1.empty or len(df1.columns) < 1):
+        fig = {
+        'data': [{
+            'x': [],
+            'y': [],
+            'type': 'scatter'
+            }]
+        }
+
+        return  fig
+    else:
+        if target:
+            df1, str_features, numeric_features,  columnsN  = data_processing(df1, target, hoverData,
+                        xaxis_column_name, yaxis_column_name,
+                        xaxis_type, yaxis_type, data_selection, datasize)
+
+            df1.columns = columnsN
+
+            df1 = df1.convert_dtypes()
+            numeric_features = df1.select_dtypes(include=['int64', 'float64','int32', 'float32' ]).columns
+            str_features = df1.select_dtypes(include=[ 'object','string']).columns
+
+            if data_selection == 'None':
+                df1 = df1
+            elif data_selection == 'Categorical' and len(str_features) > 0:
+                df1 = df1[[str_features]]
+            elif data_selection == 'Numerical'  and len(numeric_features) > 0:
+                df1 = df1[[numeric_features]]
+            else:
+                df1 = df1
+
+            df1, y, columnsN  = data_transformation(df1, target)
+
+            rf , y_pred_all, y_pred_best, y_test, fi, impvar, perf = RF_predict(df1 , y)
+
+            title = ('RF var importance for target var:' + str(target))
+
+            fig = go.Figure(go.Bar(
+                        x=fi.importance,
+                        y=fi.feature,
+                        text=fi.importance,
+                        textposition='auto',
+                        orientation='h',
+                        ))
+
+            fig.update_layout(title=title, yaxis_zeroline=False, xaxis_zeroline=False)
+
+            fig.update_layout(margin={'l': 50, 'b': 50, 't': 50, 'r': 50})
+
+            fig.update_layout(
+                font_family="Courier New",
+                font_color="black",
+                title_font_family="Times New Roman",
+                title_font_color="red",
+                title_font_size =20,
+                legend_title_font_color="Black"
+            )
+
+            fig.update_layout(
+                title={
+                    'y':1,
+                    'x':0.5,
+                    'font_size':20,
+                    'xanchor': 'center',
+                    'yanchor': 'top'})
+        else:
+            fig = {
+            'data': [{
+                'x': [],
+                'y': [],
+                'type': 'scatter'
+            }]
+        }
+        return fig
+    return fig
+
+def plot_wordcloud(data):
+    d = {a: x for a, x in data.values}
+    wc = WordCloud(background_color='black' )
+    wc.fit_words(d)
+    return wc.to_image()
+#################################################################################
+#               variable_importance_bar generate wordcloud
+#################################################################################
+
+@app.callback(
+    dash.dependencies.Output('variable_importance_wordcloud', 'figure'),
+
+    Input('datatable-upload-container', 'data'),
+    Input('dropdown_target', 'value'),
+    Input('crossfilter-indicator-scatter', 'hoverData'),
+    Input('crossfilter-xaxis-column', 'value'),
+    Input('crossfilter-yaxis-column', 'value'),
+    Input('crossfilter-xaxis-type', 'value'),
+    Input('crossfilter-yaxis-type', 'value'),
+    Input("data_selection_radio", "value"),
+    Input("dataSlider", "value"),
+    prevent_initial_call=True
+    )
+def generate_variable_importance_wordcloud_graph(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
+                xaxis_type, yaxis_type, data_selection, datasize):
+
+    df1 = pd.DataFrame(rows)
+    if target:
+        df1, str_features, numeric_features,  columnsN  = data_processing(df1, target, hoverData,
+                    xaxis_column_name, yaxis_column_name,
+                    xaxis_type, yaxis_type, data_selection, datasize)
+
+        df1.columns = columnsN
+
+        df1 = df1.convert_dtypes()
+        numeric_features = df1.select_dtypes(include=['int64', 'float64','int32', 'float32' ]).columns
+        str_features = df1.select_dtypes(include=[ 'object','string']).columns
+
+
+        if data_selection == 'None':
+            df1 = df1
+        elif data_selection == 'Categorical' and len(str_features) > 0:
+            df1 = df1[[str_features]]
+        elif data_selection == 'Numerical'  and len(numeric_features) > 0:
+            df1 = df1[[numeric_features]]
+        else:
+            df1 = df1
+
+        df1, y,  columnsN  = data_transformation(df1, target)
+
+        rf , y_pred_all, y_pred_best, y_test, fi, impvar, perf = RF_predict(df1 , y)
+        x = rf.feature_importances_
+
+        weights = fi.importance.values
+        weights = (1 + weights / weights.max() * 50)
+        words = fi.feature
+
+        colors = [plotly.colors.DEFAULT_PLOTLY_COLORS[random.randrange(1, 10)] for i in range(len(words))]
+
+        title = ('RF var importance wordcloud for target var:' + str(target))
+
+        data = go.Scatter(x = list(range(  -round(len(x)/2), round(len(words)/2)+1,  1)),
+                          y= x,
+                          mode='text',
+                          text=words,
+                          marker={'opacity': 0.3},
+                          textfont={'size':  weights, #scale weights to 1 -10
+                                    'color': colors})
+        layout = go.Layout({'xaxis': {'showgrid': False, 'showticklabels': False, 'zeroline': False},
+                            'yaxis': {'showgrid': False, 'showticklabels': False, 'zeroline': False}})
+        fig = go.Figure(data=[data], layout=layout)
+
+        fig.update_layout(title=title, yaxis_zeroline=False, xaxis_zeroline=False),
+
+        fig['layout']['yaxis'].update( range=[np.min(x)-5, np.max(x)+5],  autorange=False)
+        fig['layout']['xaxis'].update(  range=[np.min(x)-5, np.max(x)+5], autorange=False)
+
+        fig.update_layout(margin={'l': 50, 'b': 50, 't': 50, 'r': 50})
+
+
+        fig.update_layout(
+            font_family="Courier New",
+            font_color="black",
+            title_font_family="Times New Roman",
+            title_font_color="red",
+            title_font_size =20,
+            legend_title_font_color="Black"
+        )
+
+        fig.update_layout(
+            title={
+                'y':1,
+                'x':0.5,
+                'font_size':20,
+                'xanchor': 'center',
+                'yanchor': 'top'})
+
+        return fig
+
+    else:
+        fig = {'data': [{
+                        'x': [],
+                        'y': [],
+                        'type': 'scatter'
+                    }]
+                }
+    return fig
+
+@app.callback(
+    dash.dependencies.Output('RF_plot', 'figure'),
+
+    Input('datatable-upload-container', 'data'),
+    Input('dropdown_target', 'value'),
+    Input('crossfilter-indicator-scatter', 'hoverData'),
+    Input('crossfilter-xaxis-column', 'value'),
+    Input('crossfilter-yaxis-column', 'value'),
+    Input('crossfilter-xaxis-type', 'value'),
+    Input('crossfilter-yaxis-type', 'value'),
+    Input("data_selection_radio", "value"),
+    Input("dataSlider", "value"),
+    prevent_initial_call=True
+    )
+def rf_graph(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
+                xaxis_type, yaxis_type, data_selection, datasize):
+
+    df1 = pd.DataFrame(rows)
+    if target:
+        df1, str_features, numeric_features,  columnsN  = data_processing(df1, target, hoverData,
+                    xaxis_column_name, yaxis_column_name,
+                    xaxis_type, yaxis_type, data_selection, datasize)
+
+        df1.columns = columnsN
+
+        df1 = df1.convert_dtypes()
+        numeric_features = df1.select_dtypes(include=['int64', 'float64','int32', 'float32' ]).columns
+        str_features = df1.select_dtypes(include=[ 'object','string']).columns
+
+        if data_selection == 'None':
+            df1 = df1
+        elif data_selection == 'Categorical' and len(str_features) > 0:
+            df1 = df1[[str_features]]
+        elif data_selection == 'Numerical'  and len(numeric_features) > 0:
+            df1 = df1[[numeric_features]]
+        else:
+            df1 = df1
+
+        df1, y,  columnsN  = data_transformation(df1, target)
+
+        rf , y_pred_all, y_pred_best, y_test, fi, impvar, perf = RF_predict(df1 , y)
+        fig = tree.plot_tree(rf)
+
+        title = ('RF var importance wordcloud for target var:' + str(target))
+
+        fig.update_layout(title=title, yaxis_zeroline=False, xaxis_zeroline=False),
+
+        fig.update_layout(margin={'l': 50, 'b': 50, 't': 50, 'r': 50})
+
+        fig.update_layout(
+            font_family="Courier New",
+            font_color="black",
+            title_font_family="Times New Roman",
+            title_font_color="red",
+            title_font_size =20,
+            legend_title_font_color="Black"
+        )
+
+        fig.update_layout(
+            title={
+                'y':1,
+                'x':0.5,
+                'font_size':20,
+                'xanchor': 'center',
+                'yanchor': 'top'})
+
+        return fig
+
+    else:
+        fig = {'data': [{
+                        'x': [],
+                        'y': [],
+                        'type': 'scatter'
+                    }]
+                }
+    return fig
+
+
+#################################################################################
+#               model performance
+#################################################################################
+@app.callback(
+    dash.dependencies.Output('performance_whisker', 'figure'),
     Input('datatable-upload-container', 'data'),
     Input('dropdown_target', 'value'),
     Input('crossfilter-indicator-scatter', 'hoverData'),
@@ -1387,124 +1853,274 @@ def update_pairplot_grpah1(rows, target, hoverData, xaxis_column_name, yaxis_col
     prevent_initial_call=True
     )
 
-# def update_grpah(selected_counties, selected_state):
 def update_pairplot_whisker1(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
                 xaxis_type, yaxis_type, data_selection, datasize):
     df1 = pd.DataFrame(rows)
     if (df1.empty or len(df1.columns) < 1):
-        return {
-                'data': [{
-                    'x': [],
-                    'y': [],
-                    'type': 'bar'
-                }]
-            }
-
-    try:
-        fig = px.box(df1, y=target)
-    except:
         fig = {
-            'data': [{
-                'x': [],
-                'y': [],
-                'type': 'scatter'
-            }]
-        }
-    return fig
-
-
-
-#################################################################################
-#               variable_importance_bar
-#################################################################################
-@app.callback(Output('variable_importance_bar', 'figure'),
-    Input('datatable-upload-container', 'data'),
-    Input('dropdown_target', 'value'),
-    Input('crossfilter-indicator-scatter', 'hoverData'),
-    Input('crossfilter-xaxis-column', 'value'),
-    Input('crossfilter-yaxis-column', 'value'),
-    Input('crossfilter-xaxis-type', 'value'),
-    Input('crossfilter-yaxis-type', 'value'),
-    Input("data_selection_radio", "value"),
-    Input("dataSlider", "value"),
-    prevent_initial_call=True
-    )
-
-def display_bargraph1(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
-                xaxis_type, yaxis_type, data_selection, datasize):
-    df1 = pd.DataFrame(rows)
-
-    if (df1.empty or len(df1.columns) < 1):
-        return {
-                'data': [{
-                    'x': [],
-                    'y': [],
-                    'type': 'bar'
-                }]
-            }
-
-    try:
-
-        df1 = data_processing(df1, target, hoverData, xaxis_column_name, yaxis_column_name,
-                    xaxis_type, yaxis_type, data_selection, datasize)
-
-        rf, colN = RF_predict(df1, target)
-        x = rf.feature_importances_
-        # y = colN
-        fi = pd.DataFrame({'feature': colN,
-                           'importance': x}).\
-                            sort_values('importance', ascending = False)
-
-        fig = go.Figure(go.Bar(
-                    x=fi.importance,
-                    y=fi.feature,
-                    orientation='h'))
-    except:
-
-        fig = {
-            'data': [{
-                'x': [],
-                'y': [],
-                'type': 'scatter'
-            }]
-        }
-    return fig
-
-
-@app.callback(Output('variable_importance_wordcloud', 'figure'),
-    Input('datatable-upload-container', 'data'),
-    Input('dropdown_target', 'value'),
-    Input('crossfilter-indicator-scatter', 'hoverData'),
-    Input('crossfilter-xaxis-column', 'value'),
-    Input('crossfilter-yaxis-column', 'value'),
-    Input('crossfilter-xaxis-type', 'value'),
-    Input('crossfilter-yaxis-type', 'value'),
-    Input("data_selection_radio", "value"),
-    Input("dataSlider", "value"),
-    prevent_initial_call=True
-    )
-
-def variable_importance_wordcloud_graph(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
-                xaxis_type, yaxis_type, data_selection, datasize):
-    df1 = pd.DataFrame(rows)
-    if (df1.empty or len(df1.columns) < 1):
-        return {
-            'data': [{
-                'x': [],
-                'y': [],
-                'type': 'pie'
-            }]
-        }
-    else:
-        thisFig ={
         'data': [{
-            'x': df1[df1.columns[0]] ,
-            'y': df1[df1.columns[0]],
-            'type': 'pie','title':'Variable importance',
-        }]
-    }
+            'x': [],
+            'y': [],
+            'type': 'scatter'
+            }]
+        }
 
-    return thisFig
+        return  fig
+    else:
+        if target:
+            df1, str_features, numeric_features,  columnsN  = data_processing(df1, target, hoverData,
+                        xaxis_column_name, yaxis_column_name,
+                        xaxis_type, yaxis_type, data_selection, datasize)
+
+            df1.columns = columnsN
+
+            df1 = df1.convert_dtypes()
+            numeric_features = df1.select_dtypes(include=['int64', 'float64','int32', 'float32' ]).columns
+            str_features = df1.select_dtypes(include=[ 'object','string']).columns
+
+            if data_selection == 'None':
+                df1 = df1
+            elif data_selection == 'Categorical' and len(str_features) > 0:
+                df1 = df1[[str_features]]
+            elif data_selection == 'Numerical'  and len(numeric_features) > 0:
+                df1 = df1[[numeric_features]]
+            else:
+                df1 = df1
+
+            df1, y, columnsN  = data_transformation(df1, target)
+
+            rf , y_pred_all, y_pred_best, y_test, fi, impvar, perf = RF_predict(df1 , y)
+
+            np.random.seed(1)
+
+            N = len(y_test)
+            xss = list(range(0,  N))
+            title = ('RF predictions for target var:' + str(target))
+            layout = go.Layout(
+                    plot_bgcolor='rgba(0,0,0,0)',
+                legend=dict(
+                    x=0.2,
+                    y=0.9,
+                    traceorder='normal',
+                    font=dict(
+                        size=12,),
+                ),
+                annotations=[
+                    dict(
+                        x=0,
+                        y=0.85,
+                        xref='paper',
+                        yref='paper',
+                        showarrow=False
+                    )
+                ]
+            )
+
+            fig = go.Figure(layout = layout)
+
+            nm  = ('target var: ' + str(target))
+            bestPrdName = ('preduction from 1st imp var: ' + str(impvar))
+            allPredName = ('prediction from all vars' )
+
+            fig.add_trace(go.Scatter(x=xss, y=y_test, name=nm,
+                                     line=dict(color='royalblue', width=4)))
+
+
+            fig.add_trace(go.Scatter(x=xss, y=y_pred_best, name= bestPrdName,
+                                     line=dict(color='firebrick', width=4,
+                                          dash='dash')))
+
+            fig.add_trace(go.Scatter(x=xss, y=y_pred_all, name= allPredName,
+                                     line = dict(color='firebrick', width=4, dash='dot')))
+
+            fig.update_xaxes(showgrid=False)
+
+            fig.add_annotation(x=0, y=0.85, xanchor='left', yanchor='bottom',
+                               xref='paper', yref='paper', showarrow=False, align='left',
+                               bgcolor='rgba(255, 255, 255, 0.5)' )
+
+            fig.update_layout(margin={'l': 50, 'b': 50, 't': 50, 'r': 50}, hovermode='closest')
+
+
+            fig.update_layout(
+                font_family="Courier New",
+                font_color="black",
+                title_font_family="Times New Roman",
+                title_font_color="Black",
+                title_font_size =15,
+                legend_title_font_color="black"
+            )
+
+            fig.update_layout(
+                title={
+                    'y':1 ,
+                    'x':0.5,
+                    'font_size':20,
+                    'xanchor': 'center',
+                    'yanchor': 'top'})
+
+
+            fig.update_layout(title=title,
+                   xaxis_title='values',
+                   yaxis_title=target)
+        else:
+            fig = {
+            'data': [{
+                'x': [],
+                'y': [],
+                'type': 'scatter'
+            }]
+        }
+        return fig
+    return fig
+
+#################################################################################
+#              model accuracies
+#################################################################################
+@app.callback(
+    dash.dependencies.Output('roc', 'figure'),
+    Input('datatable-upload-container', 'data'),
+    Input('dropdown_target', 'value'),
+    Input('crossfilter-indicator-scatter', 'hoverData'),
+    Input('crossfilter-xaxis-column', 'value'),
+    Input('crossfilter-yaxis-column', 'value'),
+    Input('crossfilter-xaxis-type', 'value'),
+    Input('crossfilter-yaxis-type', 'value'),
+    Input("data_selection_radio", "value"),
+    Input("dataSlider", "value"),
+    prevent_initial_call=True
+    )
+def roc_plot(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
+                xaxis_type, yaxis_type, data_selection, datasize):
+    df1 = pd.DataFrame(rows)
+    if (df1.empty or len(df1.columns) < 1):
+        fig = {
+        'data': [{
+            'x': [],
+            'y': [],
+            'type': 'scatter'
+            }]
+        }
+
+        return  fig
+    else:
+        if target:
+            df1, str_features, numeric_features,  columnsN  = data_processing(df1, target, hoverData,
+                        xaxis_column_name, yaxis_column_name,
+                        xaxis_type, yaxis_type, data_selection, datasize)
+
+            df1.columns = columnsN
+
+            df1 = df1.convert_dtypes()
+            numeric_features = df1.select_dtypes(include=['int64', 'float64','int32', 'float32' ]).columns
+            str_features = df1.select_dtypes(include=[ 'object','string']).columns
+
+            if data_selection == 'None':
+                df1 = df1
+            elif data_selection == 'Categorical' and len(str_features) > 0:
+                df1 = df1[[str_features]]
+            elif data_selection == 'Numerical'  and len(numeric_features) > 0:
+                df1 = df1[[numeric_features]]
+            else:
+                df1 = df1
+
+            df1, y, columnsN  = data_transformation(df1, target)
+
+            rf , y_pred_all, y_pred_best, y_test, fi, impvar, perf = RF_predict(df1 , y)
+
+            np.random.seed(1)
+
+            N = len(perf)
+            xss = list(range(0,  N)) #np.linspace(0, N, N)
+
+            title = ('RF pred. accuracies for target var:' + str(target))
+
+            layout = go.Layout(
+                    plot_bgcolor='rgba(0,0,0,0)',
+                legend=dict(
+                    x=0.2,
+                    y=0.85,
+                    traceorder='normal',
+                    font=dict(
+                        size=12,),
+                ),
+                annotations=[
+                    dict(
+                        x=0,
+                        y=0.75,
+                        xref='paper',
+                        yref='paper',
+                        showarrow=False
+                    )
+                ]
+            )
+
+            fig = go.Figure(layout = layout)
+
+
+            bestPrdName = ('preduction from 1st imp var: ' + str(impvar))
+            allPredName = ('prediction from all vars')
+
+
+            fig.add_trace(go.Scatter(x=xss, y=perf['Most important predector'], name= bestPrdName,
+                                     line=dict(color='firebrick', width=4,
+                                          dash='dash')))
+
+            fig.add_trace(go.Scatter(x=xss, y=perf['All features'], name= allPredName,
+                                     line = dict(color='firebrick', width=4, dash='dot')))
+
+            fig.update_xaxes(showgrid=False)
+
+            fig.add_annotation(x=0, y=0.85, xanchor='left', yanchor='bottom',
+                               xref='paper', yref='paper', showarrow=False, align='left',
+                               bgcolor='rgba(255, 255, 255, 0.5)' )
+
+            fig.update_layout(margin={'l': 50, 'b': 50, 't': 50, 'r': 50}, hovermode='closest')
+
+
+            fig.update_layout(
+                font_family="Courier New",
+                font_color="black",
+                title_font_family="Times New Roman",
+                title_font_color="Black",
+                title_font_size =15,
+                legend_title_font_color="black"
+            )
+
+
+            fig.update_layout(
+                title={
+                    'y':1 ,
+                    'x':0.5,
+                    'font_size':20,
+                    'xanchor': 'center',
+                    'yanchor': 'top'})
+
+
+            fig.update_layout(title=title,
+                   xaxis_title='values',
+                   yaxis_title='Accuracy measures (1 = 100%)')
+
+            fig.update_layout(
+                xaxis = dict(
+                    tickmode = 'array',
+                    tickvals = xss,
+                    ticktext = perf.index
+                )
+            )
+
+        else:
+            fig = {
+            'data': [{
+                'x': [],
+                'y': [],
+                'type': 'scatter'
+            }]
+        }
+        return fig
+    return fig
+
 
 if __name__ == '__main__':
     app.run_server()
+
