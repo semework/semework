@@ -26,7 +26,7 @@ category holds all the cases in a given node, i.e., when it is a pure tree, this
 1. First calculate the the effect of using all variables
 2. Next start dropping/shuffling features and keep calculating prediction errors
 3. Finally rank variables (AKA features) in order of decreasing importance (i.e. accuracy in prediction). For instance, it is possible that a neuron's firing rate is a better predictor of its memory potential, than, let's say its overall shape.
-4. Show your results in a relational(proportional) and simple graphic display which shows the heirearchy, for instance horizonal bar charts where the top bar is the most influencial features. 
+4. Show your results in a relational(proportional) and simple graphic display which shows the heirearchy, for instance horizonal bar charts where the top bar is the most influencial feature. 
 
  
 Go here for more info: https://www.displayr.com/how-is-variable-importance-calculated-for-a-random-forest/
