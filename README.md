@@ -43,8 +43,9 @@ of data analysis. The main page should resemble the picture below when you just 
 
 ### You can now:  
  
-* upload data and see 8 plots (as tested using just numeric data i.e. the Iris data provided here)
-* the first few are simple data explorations, they are then followed by one RF analysis (showing variable importance for your target variable). RF is show in both bar graphs and wordcloud
+* upload data and see 10 plots (as tested using just numeric data i.e. the Iris data provided here)
+* the first few are simple data explorations, they are then followed by one RF analysis (showing variable importance for your target variable). RF   is shown in both bar graphs and wordcloud
+* predictions of your target variable and associated accuracies are also provided in figures 9 & 10
 * dropdown boxes and data size slider work,  and you can see them changing plots 
  
 ## Due to intricacies of the analyis, these are left to do: 
@@ -89,7 +90,7 @@ The first three plots will fill up with all of the data, for visual surveillance
  
 ## Once you choose your target and x and ys, you should see some results now - and the page should look something like this ...  
  
-![xgzg](images//current_figs_with_iris_data.png)
+![xgzg](images//main_after.png)
 
 ## Please be patient and wait if you don't see all figures for the Iris data. Slowness is due to RF analysis.  
  
@@ -102,4 +103,4 @@ Thank you for trying the tool. Please feel free to contact me for feedback and q
 <hr>
 <p> </p>
 
-©  Last edit March 24, 2021. Mulugeta Semework Abebe
+©  Last edit March 26, 2021. Mulugeta Semework Abebe
