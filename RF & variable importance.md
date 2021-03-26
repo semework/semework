@@ -2,13 +2,14 @@
 
 ## Which feature (also known as 'Variable') should you use to predict your target feature?
 
-Examination of which of your data features are important in predicting your target variable achieved by a tool widely regarded as the best approach, Random Forest (RF) 
-fit variable importance score. The algorithm's results are based on beta coefficients in logistic regression models and this tool is used for
+Examination of which of your data features are important in predicting your target variable achieved by a tool widely regarded as the best approach, Random Forest (RF) fit variable importance score. The algorithm's results are based on beta coefficients in logistic regression models and this tool is used for
 dimensionality reduction. 
 
 To give a simply analogy, if we have neurons and we recorded several parameters of their activity, we can use each of these 
 candidate variables and evaluat them in relation to a binary outcome of interest, for instance whether they will 
 show memory or no memory responses after being trained on such tasks. 
+
+Accordingly, when you choose your target variable fromt the 'target' dropdown box, all other features now become independent variables which are used to predict this target.
 
 RF fit represents the effect of a variable in both main effects and interactions. Such RF variable 
 importance is quantified to measure total decrease in RF tree node impurities. The method tabulates the 
