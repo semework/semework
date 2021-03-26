@@ -1,11 +1,11 @@
  ## Variable importance and random forests 
  
- 
- 
+
 # Variable importance
 
-Examination of which of your data features are important in 
-in predicting your target variable achieved by a tool widely regarded as the best approach, Random Forest (RF) 
+## Which feature (also known as 'Variable') should you use to predict your target feature?
+
+Examination of which of your data features are important in predicting your target variable achieved by a tool widely regarded as the best approach, Random Forest (RF) 
 fit variable importance score. The algorithm's results are based on beta coefficients in logistic regression models and this tool is used for
 dimensionality reduction. 
 
