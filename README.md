@@ -92,7 +92,7 @@ The first three plots will fill up with all of the data, for visual surveillance
  
 ![xgzg](images//main_after.png)
 
-#### Please be patient and wait if you don't see all figures for the Iris data. Slowness is due to RF analysis. The RF regressor used not too stringent, to make sure decent time performance is achieved. * more information about RF and variable importance analysis is provided here: 
+#### Please be patient and wait if you don't see all figures for the Iris data. Slowness is due to RF analysis. The RF regressor used not too stringent, to make sure decent time performance is achieved. * more information about RF and variable importance analysis is provided here: (https://github.com/semework/semework/blob/main/RF%20&%20variable%20importance.md)
  
 
 #### Kindly get started by playing with the sample data provided (famous Iris data) ([here](https://github.com/semework/semework/tree/main/assets) ), which you can upload when you first run the app.
