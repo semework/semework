@@ -749,7 +749,6 @@ def return_accuracies(X_train, X_test, y_train, y_test, y_pred):
 
     MAE =  mae1(y_test, y_pred)
 
-
     return pd.DataFrame([R2Score, adjr2, MSE, MAE ])
 #%%
 def clean_up_data(All_data, sparsity_thresh, NaN_thresh, corr_thresh):
@@ -824,7 +823,7 @@ def data_processing(rows, target, hoverData, xaxis_column_name, yaxis_column_nam
 
     numeric_transformer = Pipeline(steps=[
         ('imputer', SimpleImputer(strategy='median')),
-        ('scaler', StandardScaler())])
+         ])
 
     categorical_transformer = OneHotEncoder(handle_unknown='ignore')
     preprocessor1 = ColumnTransformer(transformers=[
@@ -1004,7 +1003,6 @@ def update_y_dropdown(contents, filename, data_selection ):
     else:
         return []
 
-
 # update x-dropdown
 @app.callback(Output('crossfilter-xaxis-column', 'options'),
               [Input('datatable-upload', 'contents'),
@@ -1103,12 +1101,11 @@ def update_scat(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
 
 def create_scatter(dff, xaxis_type, yaxis_type, xaxis_column_name, yaxis_column_name, title, target):
 
-
     fig = px.scatter(dff, x=xaxis_column_name, y=target, title=title)
 
     fig.update_xaxes(showgrid=False)
 
-    fig.add_annotation(x=0, y=0.85, xanchor='left', yanchor='bottom',
+    fig.add_annotation(x=0, y=0.85, xanchor='left', yanchor='bottom',text = '',
                        xref='paper', yref='paper', showarrow=False, align='left',
                        bgcolor='rgba(255, 255, 255, 0.5)' )
 
@@ -1120,22 +1117,20 @@ def create_scatter(dff, xaxis_type, yaxis_type, xaxis_column_name, yaxis_column_
 
     fig.update_layout(margin={'l': 50, 'b': 50, 't': 50, 'r': 50}, hovermode='closest')
 
-
     fig.update_layout(
         font_family="Courier New",
         font_color="black",
         title_font_family="Times New Roman",
         title_font_color="red",
-        title_font_size =15,
-        legend_title_font_color="black"
+        title_font_size =14,
+        legend_title_font_color="Black"
     )
-
 
     fig.update_layout(
         title={
-            'y':1 ,
+            'y':0.95,
             'x':0.5,
-            'font_size':20,
+            'font_size':15,
             'xanchor': 'center',
             'yanchor': 'top'})
 
@@ -1149,7 +1144,7 @@ def create_time_series(dff, xaxis_type, yaxis_type, ydata, title, target):
     fig.update_xaxes(showgrid=False)
     fig.update_xaxes(type='linear' if xaxis_type == 'Linear' else 'log')
     fig.update_yaxes(type='linear' if yaxis_type == 'Linear' else 'log')
-    fig.add_annotation(x=0, y=0.85, xanchor='left', yanchor='bottom',
+    fig.add_annotation(x=0, y=0.85, xanchor='left', yanchor='bottom',text = '',
                        xref='paper', yref='paper', showarrow=False, align='left',
                        bgcolor='rgba(255, 255, 255, 0.5)' )
 
@@ -1161,15 +1156,15 @@ def create_time_series(dff, xaxis_type, yaxis_type, ydata, title, target):
         font_color="black",
         title_font_family="Times New Roman",
         title_font_color="red",
-        title_font_size =15,
-        legend_title_font_color="black"
+        title_font_size =14,
+        legend_title_font_color="Black"
     )
 
     fig.update_layout(
         title={
-            'y':1 ,
+            'y':0.95,
             'x':0.5,
-            'font_size':20,
+            'font_size':15,
             'xanchor': 'center',
             'yanchor': 'top'})
 
@@ -1309,13 +1304,11 @@ def update_corr_heatmap(rows, target, hoverData, xaxis_column_name, yaxis_column
                         xaxis_column_name, yaxis_column_name,
                         xaxis_type, yaxis_type, data_selection, datasize)
 
-
             df1.columns = columnsN
 
             df1 = df1.convert_dtypes()
             numeric_features = df1.select_dtypes(include=['int64', 'float64','int32', 'float32' ]).columns
             str_features = df1.select_dtypes(include=[ 'object','string']).columns
-
 
             if data_selection == 'None':
                 df1 = df1
@@ -1328,25 +1321,26 @@ def update_corr_heatmap(rows, target, hoverData, xaxis_column_name, yaxis_column
             # try:
             title = ( str(target) + ' and its correlation with other vars')
 
-
             corr, colls =  do_corr(df1, imp_col=target)
+
             fig = px.imshow(corr)
 
             fig.update_layout(title=title, yaxis_zeroline=False, xaxis_zeroline=False)
+
             fig.update_layout(
                 font_family="Courier New",
                 font_color="black",
                 title_font_family="Times New Roman",
                 title_font_color="red",
-                title_font_size =15,
-                legend_title_font_color="black"
+                title_font_size =14,
+                legend_title_font_color="Black"
             )
 
             fig.update_layout(
                 title={
-                    'y':1 ,
+                    'y':0.95,
                     'x':0.5,
-                    'font_size':20,
+                    'font_size':15,
                     'xanchor': 'center',
                     'yanchor': 'top'})
         else:
@@ -1423,21 +1417,21 @@ def update_corr_nx(rows, target, hoverData, xaxis_column_name, yaxis_column_name
                     linewidths=1, font_size=15)
 
             fig.update_layout(title=title, yaxis_zeroline=False, xaxis_zeroline=False)
+
             fig.update_layout(
                 font_family="Courier New",
                 font_color="black",
                 title_font_family="Times New Roman",
                 title_font_color="red",
-                title_font_size =15,
-                legend_title_font_color="black"
+                title_font_size =14,
+                legend_title_font_color="Black"
             )
-
 
             fig.update_layout(
                 title={
-                    'y':1 ,
+                    'y':0.95,
                     'x':0.5,
-                    'font_size':20,
+                    'font_size':15,
                     'xanchor': 'center',
                     'yanchor': 'top'})
         else:
@@ -1477,7 +1471,7 @@ def update_correlation_d_plot(rows, target, hoverData, xaxis_column_name, yaxis_
                                    histnorm='percent',
                                    nbins = 10)
 
-            title = ('Variable and their distributions'  )
+            title = ('Variable and their distributions' )
 
             fig.update_layout(title=title, yaxis_zeroline=False, xaxis_zeroline=False),
 
@@ -1488,15 +1482,15 @@ def update_correlation_d_plot(rows, target, hoverData, xaxis_column_name, yaxis_
                 font_color="black",
                 title_font_family="Times New Roman",
                 title_font_color="red",
-                title_font_size =20,
+                title_font_size =14,
                 legend_title_font_color="Black"
             )
 
             fig.update_layout(
                 title={
-                    'y':1,
+                    'y':0.95,
                     'x':0.5,
-                    'font_size':20,
+                    'font_size':15,
                     'xanchor': 'center',
                     'yanchor': 'top'})
 
@@ -1528,20 +1522,44 @@ def update_pairplot_grpah1(rows, target, hoverData, xaxis_column_name, yaxis_col
     df1 = pd.DataFrame(rows)
 
     if (df1.empty or len(df1.columns) < 1):
-        return {
+        fig = {
                 'data': [{
                     'x': [],
                     'y': [],
                     'type': 'bar'
                 }]
             }
+    else:
 
-    try:
-        fig = ff.create_scatterplotmatrix(df1)
-        return fig
-    except:
         try:
-            fig = ff.create_scatterplotmatrix(df1)
+            fig = ff.create_scatterplotmatrix(df1, diag='histogram',  size=4,
+                                              index=target, )
+            title = "Pairwise relationships"
+            fig.update_layout(title=title)
+
+            fig.update_layout(
+                font_family="Courier New",
+                font_color="black",
+                title_font_family="Times New Roman",
+                title_font_color="red",
+                title_font_size =14,
+                legend_title_font_color="Black"
+            )
+
+            fig.update_layout(
+                title={
+                    'y':0.95,
+                    'x':0.5,
+                    'font_size':15,
+                    'xanchor': 'center',
+                    'yanchor': 'top'})
+
+            fig['layout']['xaxis']['tickfont'].update(size=10)
+
+            fig['layout']['yaxis']['tickfont'].update(size=10)
+
+            fig['layout']['font']['size'] = 8
+
         except:
             fig = {
                 'data': [{
@@ -1628,17 +1646,31 @@ def variable_importance_generator(rows, target, hoverData, xaxis_column_name, ya
                 font_color="black",
                 title_font_family="Times New Roman",
                 title_font_color="red",
-                title_font_size =20,
+                title_font_size =12,
+                legend_title_font_color="Black"
+            )
+
+            fig.update_layout(title=title,
+                xaxis_title='Relative importance',
+                yaxis_title='Feature name')
+
+            fig.update_layout(
+                font_family="Courier New",
+                font_color="black",
+                title_font_family="Times New Roman",
+                title_font_color="red",
+                title_font_size =14,
                 legend_title_font_color="Black"
             )
 
             fig.update_layout(
                 title={
-                    'y':1,
+                    'y':0.95,
                     'x':0.5,
-                    'font_size':20,
+                    'font_size':15,
                     'xanchor': 'center',
                     'yanchor': 'top'})
+
         else:
             fig = {
             'data': [{
@@ -1655,6 +1687,7 @@ def plot_wordcloud(data):
     wc = WordCloud(background_color='black' )
     wc.fit_words(d)
     return wc.to_image()
+
 #################################################################################
 #               variable_importance_bar generate wordcloud
 #################################################################################
@@ -1701,49 +1734,41 @@ def generate_variable_importance_wordcloud_graph(rows, target, hoverData, xaxis_
         df1, y,  columnsN  = data_transformation(df1, target)
 
         rf , y_pred_all, y_pred_best, y_test, fi, impvar, perf = RF_predict(df1 , y)
-        x = rf.feature_importances_
 
         weights = fi.importance.values
         weights = (1 + weights / weights.max() * 50)
         words = fi.feature
 
-        colors = [plotly.colors.DEFAULT_PLOTLY_COLORS[random.randrange(1, 10)] for i in range(len(words))]
+        df = pd.DataFrame({'word': words,
+                           'count': weights})
+
+        data = dict(zip(df['word'].tolist(), df['count'].tolist()))
+        fig = plot_wordcloud(data)
 
         title = ('RF var importance wordcloud for target var:' + str(target))
 
-        data = go.Scatter(x = list(range(  -round(len(x)/2), round(len(words)/2)+1,  1)),
-                          y= x,
-                          mode='text',
-                          text=words,
-                          marker={'opacity': 0.3},
-                          textfont={'size':  weights, #scale weights to 1 -10
-                                    'color': colors})
         layout = go.Layout({'xaxis': {'showgrid': False, 'showticklabels': False, 'zeroline': False},
                             'yaxis': {'showgrid': False, 'showticklabels': False, 'zeroline': False}})
-        fig = go.Figure(data=[data], layout=layout)
+        fig = go.Figure( layout=layout)
 
         fig.update_layout(title=title, yaxis_zeroline=False, xaxis_zeroline=False),
 
-        fig['layout']['yaxis'].update( range=[np.min(x)-5, np.max(x)+5],  autorange=False)
-        fig['layout']['xaxis'].update(  range=[np.min(x)-5, np.max(x)+5], autorange=False)
-
         fig.update_layout(margin={'l': 50, 'b': 50, 't': 50, 'r': 50})
-
 
         fig.update_layout(
             font_family="Courier New",
             font_color="black",
             title_font_family="Times New Roman",
             title_font_color="red",
-            title_font_size =20,
+            title_font_size =14,
             legend_title_font_color="Black"
         )
 
         fig.update_layout(
             title={
-                'y':1,
+                'y':0.95,
                 'x':0.5,
-                'font_size':20,
+                'font_size':15,
                 'xanchor': 'center',
                 'yanchor': 'top'})
 
@@ -1812,15 +1837,15 @@ def rf_graph(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
             font_color="black",
             title_font_family="Times New Roman",
             title_font_color="red",
-            title_font_size =20,
+            title_font_size =14,
             legend_title_font_color="Black"
         )
 
         fig.update_layout(
             title={
-                'y':1,
+                'y':0.95,
                 'x':0.5,
-                'font_size':20,
+                'font_size':15,
                 'xanchor': 'center',
                 'yanchor': 'top'})
 
@@ -1834,7 +1859,6 @@ def rf_graph(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
                     }]
                 }
     return fig
-
 
 #################################################################################
 #               model performance
@@ -1896,73 +1920,68 @@ def update_pairplot_whisker1(rows, target, hoverData, xaxis_column_name, yaxis_c
             N = len(y_test)
             xss = list(range(0,  N))
             title = ('RF predictions for target var:' + str(target))
-            layout = go.Layout(
-                    plot_bgcolor='rgba(0,0,0,0)',
-                legend=dict(
-                    x=0.2,
-                    y=0.9,
-                    traceorder='normal',
-                    font=dict(
-                        size=12,),
-                ),
-                annotations=[
-                    dict(
-                        x=0,
-                        y=0.85,
-                        xref='paper',
-                        yref='paper',
-                        showarrow=False
-                    )
-                ]
-            )
 
-            fig = go.Figure(layout = layout)
+            fig = go.Figure( )
 
             nm  = ('target var: ' + str(target))
-            bestPrdName = ('preduction from 1st imp var: ' + str(impvar))
-            allPredName = ('prediction from all vars' )
 
-            fig.add_trace(go.Scatter(x=xss, y=y_test, name=nm,
-                                     line=dict(color='royalblue', width=4)))
+            allPredName = ('RF predictions')
+
+            fig.add_trace(go.Scatter(x=xss, y=y_test, name=nm,mode='markers',  marker_line_width=2, marker_size=15,
+                                     marker_color='rgba(0, 0, 200, .8)')),
 
 
-            fig.add_trace(go.Scatter(x=xss, y=y_pred_best, name= bestPrdName,
-                                     line=dict(color='firebrick', width=4,
-                                          dash='dash')))
+            fig.add_trace(go.Scatter(x=xss, y=y_pred_all, name= allPredName, mode='markers',
+                                     marker_line_width=2, marker_size=15,
+                                     marker_color='rgba(152, 0, 0, .8)')),
 
-            fig.add_trace(go.Scatter(x=xss, y=y_pred_all, name= allPredName,
-                                     line = dict(color='firebrick', width=4, dash='dot')))
+            fig.update_layout(yaxis_zeroline=False, xaxis_zeroline=False)
 
             fig.update_xaxes(showgrid=False)
 
-            fig.add_annotation(x=0, y=0.85, xanchor='left', yanchor='bottom',
-                               xref='paper', yref='paper', showarrow=False, align='left',
-                               bgcolor='rgba(255, 255, 255, 0.5)' )
-
             fig.update_layout(margin={'l': 50, 'b': 50, 't': 50, 'r': 50}, hovermode='closest')
 
-
+            fig.update_layout(title=title,
+                   xaxis_title='indices',
+                   yaxis_title=target)
             fig.update_layout(
                 font_family="Courier New",
                 font_color="black",
                 title_font_family="Times New Roman",
-                title_font_color="Black",
-                title_font_size =15,
-                legend_title_font_color="black"
+                title_font_color="red",
+                title_font_size =14,
+                legend_title_font_color="Black"
             )
 
             fig.update_layout(
                 title={
-                    'y':1 ,
+                    'y':0.95,
                     'x':0.5,
-                    'font_size':20,
+                    'font_size':15,
                     'xanchor': 'center',
                     'yanchor': 'top'})
 
+            fig.update_layout(
+                legend=dict(
+                    x=0.2,
+                    y=-0.4,
+                    traceorder="reversed",
+                    title_font_family="Times New Roman",
+                    font=dict(
+                        family="Courier New",
+                        size=14,
+                        color="black"
+                    ),
+                    bgcolor="white",
+                    bordercolor="Black",
+                    borderwidth=2
+                )
+            )
 
-            fig.update_layout(title=title,
-                   xaxis_title='values',
-                   yaxis_title=target)
+            fig.add_annotation(x=0, y=0.85, xanchor='left', yanchor='bottom',  text = '',
+                        xref='paper', yref='paper', showarrow=False, align='left',
+                        bgcolor='rgba(255, 255, 255, 0.5)')
+
         else:
             fig = {
             'data': [{
@@ -2038,11 +2057,11 @@ def roc_plot(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
             layout = go.Layout(
                     plot_bgcolor='rgba(0,0,0,0)',
                 legend=dict(
-                    x=0.2,
+                    x=0,
                     y=0.85,
                     traceorder='normal',
                     font=dict(
-                        size=12,),
+                        size=10,),
                 ),
                 annotations=[
                     dict(
@@ -2055,51 +2074,27 @@ def roc_plot(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
                 ]
             )
 
-            fig = go.Figure(layout = layout)
+            fig = go.Figure(layout = layout )
 
-
-            bestPrdName = ('preduction from 1st imp var: ' + str(impvar))
-            allPredName = ('prediction from all vars')
-
-
-            fig.add_trace(go.Scatter(x=xss, y=perf['Most important predector'], name= bestPrdName,
-                                     line=dict(color='firebrick', width=4,
-                                          dash='dash')))
-
-            fig.add_trace(go.Scatter(x=xss, y=perf['All features'], name= allPredName,
-                                     line = dict(color='firebrick', width=4, dash='dot')))
+            fig = go.Figure(go.Bar(
+                        x=xss,
+                        y=perf['All features'],
+                        textposition='auto',
+                        orientation='v',
+                        ))
 
             fig.update_xaxes(showgrid=False)
 
-            fig.add_annotation(x=0, y=0.85, xanchor='left', yanchor='bottom',
-                               xref='paper', yref='paper', showarrow=False, align='left',
-                               bgcolor='rgba(255, 255, 255, 0.5)' )
+            fig.add_annotation(x=0, y=0.85, xanchor='left', yanchor='bottom',text = '',
+                       xref='paper', yref='paper', showarrow=False, align='left',
+                       bgcolor='rgba(255, 255, 255, 0.5)' )
 
             fig.update_layout(margin={'l': 50, 'b': 50, 't': 50, 'r': 50}, hovermode='closest')
 
 
-            fig.update_layout(
-                font_family="Courier New",
-                font_color="black",
-                title_font_family="Times New Roman",
-                title_font_color="Black",
-                title_font_size =15,
-                legend_title_font_color="black"
-            )
-
-
-            fig.update_layout(
-                title={
-                    'y':1 ,
-                    'x':0.5,
-                    'font_size':20,
-                    'xanchor': 'center',
-                    'yanchor': 'top'})
-
-
             fig.update_layout(title=title,
-                   xaxis_title='values',
-                   yaxis_title='Accuracy measures (1 = 100%)')
+                   xaxis_title='Accuracy measures',
+                   yaxis_title='Accuracy/error (1=100%), small MAE and MSE is good')
 
             fig.update_layout(
                 xaxis = dict(
@@ -2108,6 +2103,24 @@ def roc_plot(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
                     ticktext = perf.index
                 )
             )
+
+            fig.update_layout(
+
+                font_family="Courier New",
+                font_color="black",
+                title_font_family="Times New Roman",
+                title_font_color="red",
+                title_font_size =14,
+                legend_title_font_color="Black"
+            )
+
+            fig.update_layout(
+                title={
+                    'y':0.95,
+                    'x':0.5,
+                    'font_size':15,
+                    'xanchor': 'center',
+                    'yanchor': 'top'})
 
         else:
             fig = {
@@ -2122,5 +2135,4 @@ def roc_plot(rows, target, hoverData, xaxis_column_name, yaxis_column_name,
 
 
 if __name__ == '__main__':
-    app.run_server()
-
+    app.run_server(debug=False)
